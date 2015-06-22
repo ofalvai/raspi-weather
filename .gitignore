@@ -1,0 +1,4 @@
+*.db
+sensor.log
+node_modules/
+public/bower_components/
