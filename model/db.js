@@ -6,7 +6,7 @@ db.getPast = function(hours, res) {
     var hourString = -hours + ' hours';
 
     var stmt = weatherDB.prepare(
-        'SELECT * FROM indoor WHERE timestamp >= datetime(?, ?, ?)'
+        'SELECT timestamp, temp, hum FROM indoor WHERE timestamp >= datetime(?, ?, ?)'
     );
     stmt.all(['now', 'localtime', hourString], function(err, rows) {
         res.json(rows);
@@ -28,7 +28,7 @@ db.getComparison = function(firstType, secondType, res) {
     weatherDB.serialize(function() {
         if(firstType == 'today') {
             var stmt = weatherDB.prepare(
-                'SELECT * FROM indoor WHERE timestamp >= datetime(?, ?, ?)'
+                'SELECT timestamp, temp, hum FROM indoor WHERE timestamp >= datetime(?, ?, ?)'
             );
             stmt.all(['now', 'localtime', 'start of day'], function(err, rows) {
                 result.first.data = rows;
@@ -39,7 +39,7 @@ db.getComparison = function(firstType, secondType, res) {
 
         if(secondType == 'yesterday') {
             var stmt = weatherDB.prepare(
-                'SELECT * FROM indoor WHERE timestamp >= datetime($now, $timezone, $start, $minus)'
+                'SELECT timestamp, temp, hum FROM indoor WHERE timestamp >= datetime($now, $timezone, $start, $minus)'
                 + 'AND timestamp <= datetime($now, $timezone, $start)'
             );
             stmt.all({
