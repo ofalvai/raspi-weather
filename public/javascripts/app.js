@@ -28,10 +28,7 @@ var globalHighchartsOptions = {
             tooltip: {
                 valueSuffix: '°C'
             },
-            color: '#f7a35c',
-            dataLabels: {
-                enabled: true
-            }
+            color: '#f7a35c'
         },
         {
             name: 'Humidity',
@@ -110,12 +107,12 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         // Ugly timezone hacking, because Date.parse() assumes UTC, and the timestamp is in local timezone
         options.series[1].pointStart = Date.parse(json[0].timestamp + 'Z');
 
-        options.series[0].pointInterval = 1000 * 60 * 10; //10 minutes
-        options.series[1].pointInterval = 1000 * 60 * 10; //10 minutes
+        options.series[0].pointInterval = 1000 * 60 * 30; //30 minutes
+        options.series[1].pointInterval = 1000 * 60 * 30; //30 minutes
 
         $.each(json, function(index, el) {
-            options.series[0].data.push(el.temp);
-            options.series[1].data.push(el.hum);
+            options.series[0].data.push(el.temperature);
+            options.series[1].data.push(el.humidity);
         });
 
         $(DOMtarget).highcharts(options);
@@ -124,6 +121,13 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
 function loadDoubleChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
+        // Make sure yesterday's data starts at 00:00
+        var startTime = new Date(json.second.data[0].timestamp);
+        if(startTime.getHours() !== 0) {
+            console.log('Not enough data for yesterday. A full day\'s data is required for comparison');
+            return;
+        }
+
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
         // Adding two more series
@@ -167,7 +171,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             // Just a dummy date object set to the beginning of a dummy day
             // Only the hours and minutes will be displayed
             options.series[i].pointStart = Date.parse('2015.01.01 00:00Z');
-            options.series[i].pointInterval = 1000 * 60 * 10; //10 minutes
+            options.series[i].pointInterval = 1000 * 60 * 30; //30 minutes
         }
 
         // Converting the actual last timestamp to our dummy datetime object
@@ -183,13 +187,13 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
 
         // Processing the first set of data
         $.each(json.first.data, function(index, el) {  
-            options.series[0].data.push(el.temp);
-            options.series[1].data.push(el.hum);
+            options.series[0].data.push(el.temperature);
+            options.series[1].data.push(el.humidity);
         });
         // And the second
         $.each(json.second.data, function(index, el) {  
-            options.series[2].data.push(el.temp);
-            options.series[3].data.push(el.hum);
+            options.series[2].data.push(el.temperature);
+            options.series[3].data.push(el.humidity);
         });
 
         $(DOMtarget).highcharts(options);
