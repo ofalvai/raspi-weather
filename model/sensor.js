@@ -4,7 +4,7 @@ var sensor = {};
 
 sensor.getCurrent = function() {
     var result = execSync('./sensor.py');
-    return result.toString();
+    return JSON.parse(result.toString());
 }
 
 module.exports = sensor;

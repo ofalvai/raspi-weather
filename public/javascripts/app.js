@@ -61,6 +61,45 @@ var globalHighchartsOptions = {
     }
 }
 
+var globalGaugeOptions = {
+    chart: {
+        type: 'gauge'
+    },
+    title: {
+        text: ''
+    },
+    pane: {
+        startAngle: -150,
+        endAngle: 150
+    },
+    yAxis: {
+        min: -10,
+        max: 40,
+        title: {
+            text: "°C"
+        },
+        plotBands: [{
+            from: -10,
+            to: 0,
+            color: '#55BF3B' // green
+        }, {
+            from: 0,
+            to: 25,
+            color: '#DDDF0D' // yellow
+        }, {
+            from: 25,
+            to: 40,
+            color: '#DF5353' // red
+        }]
+    },
+    series: [{
+        name: 'Temperature',
+        data: [],
+        tooltip: {
+            valueSuffix: ' °C'
+        }
+    }]
+}
 
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
@@ -179,5 +218,15 @@ $(document).ready(function() {
             text: 'Yesterday vs. Today'
         }
     });
+
+    $.getJSON('/api/current', function(json) {
+        // globalGaugeOptions.series[0].data[0] = json.temperature;
+        // $('#curr-temp').highcharts(globalGaugeOptions);
+        $('#curr-temp').append('<p>Temperature: ' + json.temperature + '°C</p>');
+        $('#curr-temp').append('<p>Humidity: ' + json.humidity + '%</p>');
+
+        
+    });
+
 
 });
