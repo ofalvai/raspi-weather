@@ -15,7 +15,9 @@ var globalHighchartsOptions = {
         title: {
             text: 'Humidity (%)'
         },
-        opposite: true
+        opposite: true,
+        min: 0,
+        max: 100
     }],
     series: [{
             name: 'Temperature',
