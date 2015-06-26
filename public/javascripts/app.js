@@ -23,7 +23,7 @@ var globalHighchartsOptions = {
     series: [{
             name: 'Temperature',
             yAxis: 0,
-            data: [],
+            data: [ ],
             lineWidth: 4,
             marker: {
                 enabled: false
@@ -31,7 +31,22 @@ var globalHighchartsOptions = {
             tooltip: {
                 valueSuffix: '°C'
             },
-            color: '#f7a35c'
+            color: '#F18324',
+            zones: [{
+                // 0-22: yellow
+                value: 22,
+                color: '#F1AE24'
+            },
+            {
+                // 22-30: orange
+                value: 30,
+                color: '#F18324'
+            },
+            {
+                // 30+: red
+                value: 80,
+                color: '#F7605C'
+            }]
         },
         {
             name: 'Humidity',
@@ -43,7 +58,7 @@ var globalHighchartsOptions = {
             tooltip: {
                 valueSuffix: '%'
             },
-            color: '#7cb5ec',
+            color: '#7C8FBF',
             dashStyle: 'shortdot'
         }
     ],
@@ -173,7 +188,22 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             tooltip: {
                 valueSuffix: '°C'
             },
-            color: '#f7a35c',
+            color: '#F18324',
+            zones: [{
+                // 0-22: yellow
+                value: 22,
+                color: '#F1AE24'
+            },
+            {
+                // 22-30: orange
+                value: 30,
+                color: '#F18324'
+            },
+            {
+                // 30+: red
+                value: 80,
+                color: '#F7605C'
+            }],
             dashStyle: 'shortdash'
         });
 
@@ -187,8 +217,8 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             tooltip: {
                 valueSuffix: '%'
             },
-            color: '#7cb5ec',
-            dashStyle: 'dot',
+            color: '#7C8FBF',
+            dashStyle: 'shortdash',
             visible: false
         });
 
@@ -202,6 +232,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         });
 
         options.series[1].visible = false;
+        options.series[1].dashStyle = 'solid';
         options.tooltip.xDateFormat = '%H:%M';
         options.xAxis.labels = {
             format: '{value: %H:%M}'
