@@ -4,7 +4,8 @@ var globalHighchartsOptions = {
         zoomType: 'x'
     },
     xAxis: {
-        type: 'datetime'
+        type: 'datetime',
+        plotBands: [ ]
     },
     yAxis: [{
         title: {
@@ -56,7 +57,10 @@ var globalHighchartsOptions = {
         crosshairs: true
     },
     title: {
-        text: ''
+        text: '',
+        style: {
+            'font-weight': 'bold'
+        }
     }
 }
 
@@ -104,20 +108,44 @@ function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
+        $.each(json, function(index, el) {
+            // Populating the series
+            options.series[0].data.push(el.temperature);
+            options.series[1].data.push(el.humidity);
+
+            // Computing plot bands for the night interval(s)
+            var timeEpoch = Date.parse(el.timestamp + 'Z');
+            // The above creates a timezone-correct UNIX epoch representation of the timestamp,
+            // and we need a regular datetime object to get hours and minutes.
+            // Ugly timezone hacking...
+            var time = new Date(el.timestamp);
+            // Night start
+            if(time.getHours() == 0 && time.getMinutes() == 0) {
+                options.xAxis.plotBands.push({
+                    from: timeEpoch,
+                    to: null, // will be stored later
+                    color: '#fafafa'
+                });
+            }
+            // Night end
+            if(time.getHours() == 7 && time.getMinutes() == 0) {
+                options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = timeEpoch;
+            }
+        });
+
+        // End the plotband if it's during the night
+        if(options.xAxis.plotBands[options.xAxis.plotBands.length-1].to == null) {
+            options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = Date.parse(json[json.length-1].timestamp + 'Z');
+        }
 
         options.series[0].pointStart = Date.parse(json[0].timestamp + 'Z');
         // Ugly timezone hacking, because Date.parse() assumes UTC, and the timestamp is in local timezone
         options.series[1].pointStart = Date.parse(json[0].timestamp + 'Z');
-
         options.series[0].pointInterval = 1000 * 60 * 30; //30 minutes
         options.series[1].pointInterval = 1000 * 60 * 30; //30 minutes
 
-        $.each(json, function(index, el) {
-            options.series[0].data.push(el.temperature);
-            options.series[1].data.push(el.humidity);
-        });
-
         $(DOMtarget).highcharts(options);
+        $(document).trigger('chartComplete', APICall);
     });
 }
 
@@ -127,12 +155,13 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         var startTime = new Date(json.second.data[0].timestamp);
         if(startTime.getHours() !== 0) {
             console.log('Not enough data for yesterday. A full day\'s data is required for comparison');
+            $(document).trigger('chartComplete', APICall);
             return;
         }
 
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
-        // Adding two more series
+        // Adding  more series
         options.series.push({
             name: 'Temperature yesterday',
             yAxis: 0,
@@ -163,6 +192,15 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             visible: false
         });
 
+        $.each(json.first.data, function(index, el) {
+            options.series[0].data.push(el.temperature);
+            options.series[1].data.push(el.humidity);
+        });
+        $.each(json.second.data, function(index, el) {
+            options.series[2].data.push(el.temperature);
+            options.series[3].data.push(el.humidity);
+        });
+
         options.series[1].visible = false;
         options.tooltip.xDateFormat = '%H:%M';
         options.xAxis.labels = {
@@ -187,23 +225,31 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             width: 1
         }];
 
-        // Processing the first set of data
-        $.each(json.first.data, function(index, el) {  
-            options.series[0].data.push(el.temperature);
-            options.series[1].data.push(el.humidity);
-        });
-        // And the second
-        $.each(json.second.data, function(index, el) {  
-            options.series[2].data.push(el.temperature);
-            options.series[3].data.push(el.humidity);
-        });
+        // Night plotband
+        options.xAxis.plotBands = [{
+            from: Date.parse('2015.01.01 00:00Z'),
+            to: Date.parse('2015.01.01 07:00Z'),
+            color: '#fafafa'
+        }];
 
         $(DOMtarget).highcharts(options);
+        $(document).trigger('chartComplete', APICall);
     });
 }
 
+function loadCurrentData() {
+    $.getJSON('/api/current', function(json) {
+        // globalGaugeOptions.series[0].data[0] = json.temperature;
+        // $('#curr-temp').highcharts(globalGaugeOptions);
+        $('#curr-temp').append('<p>Temperature: ' + json.temperature + '°C</p>');
+        $('#curr-temp').append('<p>Humidity: ' + json.humidity + '%</p>');
+
+        
+    });
+}
 
 $(document).ready(function() {
+
     loadChart('/api/past/24h', '#chart-24h', {
         title: {
             text: 'Past 24 hours'
@@ -213,25 +259,24 @@ $(document).ready(function() {
     loadChart('/api/past/week', '#chart-week', {
         title: {
             text: 'Past week'
-        },
-        series:[{
-            color: '#f45b5b'
-        }]
+        }
     });
 
     loadDoubleChart('/api/compare/today/yesterday', '#chart-yesterday', {
         title: {
-            text: 'Yesterday vs. Today'
+            text: 'Today vs. yesterday'
         }
     });
 
-    $.getJSON('/api/current', function(json) {
-        // globalGaugeOptions.series[0].data[0] = json.temperature;
-        // $('#curr-temp').highcharts(globalGaugeOptions);
-        $('#curr-temp').append('<p>Temperature: ' + json.temperature + '°C</p>');
-        $('#curr-temp').append('<p>Humidity: ' + json.humidity + '%</p>');
-
-        
+    // Delay the current weather request until the others have completed,
+    // because it takes a long time and slows down poor little Pi :(
+    var charts_loaded = 0;
+    $(document).on('chartComplete', function(e) {
+        charts_loaded++;
+        if(charts_loaded >= 3) {
+            // WARNING: magic number
+            loadCurrentData();
+        }
     });
 
 
