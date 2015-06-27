@@ -19,6 +19,11 @@ router.get('/past/week', function(req, res) {
     db.getPast(24*7, res);
 });
 
+/* GET past month */
+router.get('/past/month', function(req, res) {
+    db.getPast(24*7*30, res);
+});
+
 /* GET yesterday vs today */
 router.get('/compare/today/yesterday', function(req, res) {
     db.getComparison('today', 'yesterday', res);

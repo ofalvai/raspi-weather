@@ -121,9 +121,19 @@ var globalGaugeOptions = {
 
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
+        if(!json.success) {
+            console.log(json.error);
+            return;
+        }
+
+        if(json.data.length == 0) {
+            console.log('No data.');
+            return;
+        }
+
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
-        $.each(json, function(index, el) {
+        $.each(json.data, function(index, el) {
             // Populating the series
             options.series[0].data.push(el.temperature);
             options.series[1].data.push(el.humidity);
@@ -139,7 +149,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
                 options.xAxis.plotBands.push({
                     from: timeEpoch,
                     to: null, // will be stored later
-                    color: '#fafafa'
+                    color: '#f2f2f2'
                 });
             }
             // Night end
@@ -150,12 +160,12 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
         // End the plotband if it's during the night
         if(options.xAxis.plotBands[options.xAxis.plotBands.length-1].to == null) {
-            options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = Date.parse(json[json.length-1].timestamp + 'Z');
+            options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = Date.parse(json.data[json.data.length-1].timestamp + 'Z');
         }
 
-        options.series[0].pointStart = Date.parse(json[0].timestamp + 'Z');
+        options.series[0].pointStart = Date.parse(json.data[0].timestamp + 'Z');
         // Ugly timezone hacking, because Date.parse() assumes UTC, and the timestamp is in local timezone
-        options.series[1].pointStart = Date.parse(json[0].timestamp + 'Z');
+        options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
         options.series[0].pointInterval = 1000 * 60 * 30; //30 minutes
         options.series[1].pointInterval = 1000 * 60 * 30; //30 minutes
 
@@ -166,6 +176,16 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
 function loadDoubleChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
+        if(!json.success) {
+            console.log(json.error);
+            return;
+        }
+
+        if(json.first.data.length == 0 || json.second.data.length == 0) {
+            console.log('No data.');
+            return;
+        }
+
         // Make sure yesterday's data starts at 00:00
         var startTime = new Date(json.second.data[0].timestamp);
         if(startTime.getHours() !== 0) {
@@ -176,7 +196,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
 
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
-        // Adding  more series
+        // Add more series
         options.series.push({
             name: 'Temperature yesterday',
             yAxis: 0,
@@ -256,13 +276,6 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             width: 1
         }];
 
-        // Night plotband
-        options.xAxis.plotBands = [{
-            from: Date.parse('2015.01.01 00:00Z'),
-            to: Date.parse('2015.01.01 07:00Z'),
-            color: '#fafafa'
-        }];
-
         $(DOMtarget).highcharts(options);
         $(document).trigger('chartComplete', APICall);
     });
@@ -270,12 +283,15 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
 
 function loadCurrentData() {
     $.getJSON('/api/current', function(json) {
+        if(!json.success) {
+            console.log(json.error);
+            return;
+        }
+
         // globalGaugeOptions.series[0].data[0] = json.temperature;
         // $('#curr-temp').highcharts(globalGaugeOptions);
         $('#curr-temp').append('<p>Temperature: ' + json.temperature + '°C</p>');
         $('#curr-temp').append('<p>Humidity: ' + json.humidity + '%</p>');
-
-        
     });
 }
 
@@ -304,8 +320,8 @@ $(document).ready(function() {
     var charts_loaded = 0;
     $(document).on('chartComplete', function(e) {
         charts_loaded++;
+        // WARNING: magic number
         if(charts_loaded >= 3) {
-            // WARNING: magic number
             loadCurrentData();
         }
     });
