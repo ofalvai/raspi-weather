@@ -20,7 +20,8 @@ var db = {
 
         var hourString = -hours + ' hours';
         var stmt = db.connection.prepare(
-            'SELECT timestamp, temperature, humidity FROM indoor WHERE timestamp >= datetime(?, ?, ?)',
+            'SELECT timestamp, temperature, humidity\
+            FROM indoor WHERE timestamp >= datetime(?, ?, ?)',
             function(err) {
                 // This callback function is fired every time, even without errors
                 if(err) {
@@ -57,7 +58,8 @@ var db = {
         db.connection.serialize(function() {
             if(firstType == 'today') {
                 var stmt = db.connection.prepare(
-                    'SELECT timestamp, temperature, humidity FROM indoor WHERE timestamp >= datetime(?, ?, ?)',
+                    'SELECT timestamp, temperature, humidity\
+                    FROM indoor WHERE timestamp >= datetime(?, ?, ?)',
                     function(err) {
                         if(err) {
                             db.errorHandler(err, res);
@@ -69,7 +71,8 @@ var db = {
                         db.errorHandler(err, res);
                     } else {
                         result.first.data = rows;
-                        // The result is not yet ready, we'll return both in the second query callback
+                        // The result is not yet ready,
+                        // we'll return both in the second query callback
                         // (the queries are serialized)
                     }
                 });
@@ -77,8 +80,9 @@ var db = {
 
             if(secondType == 'yesterday') {
                 var stmt = db.connection.prepare(
-                    'SELECT timestamp, temperature, humidity FROM indoor WHERE timestamp >= datetime($now, $timezone, $start, $minus)'
-                    + 'AND timestamp <= datetime($now, $timezone, $start)',
+                    'SELECT timestamp, temperature, humidity\
+                    FROM indoor WHERE timestamp >= datetime($now, $timezone, $start, $minus)\
+                    AND timestamp <= datetime($now, $timezone, $start)',
                     function(err) {
                         if(err) {
                             db.errorHandler(err, res);

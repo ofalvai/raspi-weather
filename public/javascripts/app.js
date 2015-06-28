@@ -146,9 +146,9 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
             // Computing plot bands for the night interval(s)
             var timeEpoch = Date.parse(el.timestamp + 'Z');
-            // The above creates a timezone-correct UNIX epoch representation of the timestamp,
-            // and we need a regular datetime object to get hours and minutes.
-            // Ugly timezone hacking...
+            // The above creates a timezone-correct UNIX epoch representation
+            // of the timestamp, and we need a regular datetime object
+            // to get hours and minutes.
             var time = new Date(el.timestamp);
             // Night start
             if(time.getHours() == 0 && time.getMinutes() == 0) {
@@ -165,12 +165,16 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         });
 
         // End the plotband if it's during the night
-        if(options.xAxis.plotBands[options.xAxis.plotBands.length-1].to == null) {
-            options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = Date.parse(json.data[json.data.length-1].timestamp + 'Z');
+        var last = options.xAxis.plotbands.length - 1;
+        if(options.xAxis.plotBands[last].to == null) {
+            options.xAxis.plotBands[last].to = Date.parse(
+                json.data[json.data.length-1].timestamp + 'Z'
+            );
         }
 
         options.series[0].pointStart = Date.parse(json.data[0].timestamp + 'Z');
-        // Ugly timezone hacking, because Date.parse() assumes UTC, and the timestamp is in local timezone
+        // Ugly timezone hacking, because Date.parse() assumes UTC,
+        // and the timestamp is in local timezone
         options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
         options.series[0].pointInterval = 1000 * 60 * 30; //30 minutes
         options.series[1].pointInterval = 1000 * 60 * 30; //30 minutes
@@ -272,8 +276,13 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }
 
         // Converting the actual last timestamp to our dummy datetime object
+
         var lastTimestamp = new Date(json.first.data[json.first.data.length-1].timestamp);
-        var adjustedTimestamp = new Date('2015.01.01 ' + lastTimestamp.getHours() + ':' + lastTimestamp.getMinutes() + ':00Z');
+        var adjustedTimestamp = new Date(
+            '2015.01.01 '
+            + lastTimestamp.getHours() + ':'
+            + lastTimestamp.getMinutes() + ':00Z'
+        );
 
         // Adding a red vertical marker at the last measurement
         options.xAxis.plotLines = [{
@@ -318,7 +327,7 @@ function loadOutsideWeather() {
         console.log('No Wunderground API key, unable to get outside weather data.');
         return;
     }
-    
+
     $.getJSON('http://api.wunderground.com/api/'
         + wundergroundOptions.key + '/conditions/q/'
         + wundergroundOptions.latitude + ','
