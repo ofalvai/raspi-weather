@@ -11,3 +11,15 @@ a {
     width: 800px;
     float: left;
 }
+
+.float-left {
+    float: left;
+}
+
+.clear {
+    clear: both;
+}
+
+#curr-inside {
+    margin-right: 30px;
+}

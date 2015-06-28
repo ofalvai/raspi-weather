@@ -2,9 +2,15 @@ extends layout
 
 block content
     h1= title
-    div#curr-temp
-    div#curr-hum
-    div#chart-24h.chart
+    div.float-left
+        h2='Inside'
+        div#curr-inside
+    div.float-left
+        h2='Outside'
+        div#curr-outside
+    div.float-left
+        div#curr-outside-info
+    div#chart-24h.chart.clear
     div#chart-week.chart
     div#chart-yesterday.chart
 

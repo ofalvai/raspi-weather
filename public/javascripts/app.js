@@ -10,13 +10,13 @@ var globalHighchartsOptions = {
     yAxis: [{
         title: {
             text: 'Temperature (°C)'
-        }
+        },
+        opposite: true
     },
     {
         title: {
             text: 'Humidity (%)'
         },
-        opposite: true,
         min: 0,
         max: 100
     }],
@@ -77,7 +77,7 @@ var globalHighchartsOptions = {
             'font-weight': 'bold'
         }
     }
-}
+};
 
 var globalGaugeOptions = {
     chart: {
@@ -117,7 +117,13 @@ var globalGaugeOptions = {
             valueSuffix: ' °C'
         }
     }]
-}
+};
+
+var wundergroundOptions = {
+    key: '834f172f2fe65739',
+    latitude: null,
+    longitude: null
+};
 
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
@@ -290,12 +296,47 @@ function loadCurrentData() {
 
         // globalGaugeOptions.series[0].data[0] = json.temperature;
         // $('#curr-temp').highcharts(globalGaugeOptions);
-        $('#curr-temp').append('<p>Temperature: ' + json.temperature + '°C</p>');
-        $('#curr-temp').append('<p>Humidity: ' + json.humidity + '%</p>');
+        $('#curr-inside').append('<p>Temperature: ' + json.temperature + '°C</p>');
+        $('#curr-inside').append('<p>Humidity: ' + json.humidity + '%</p>');
     });
 }
 
+function getLocation() {
+    if("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            $(document).trigger('geolocation', position);
+        }, function() {
+            console.log('Failed to get location');
+        });
+    } else {
+        console.log("No GeoLocation support :(");
+    }
+}
+
+function loadOutsideWeather() {
+    if(!wundergroundOptions.key) {
+        console.log('No Wunderground API key, unable to get outside weather data.');
+        return;
+    }
+    
+    $.getJSON('http://api.wunderground.com/api/'
+        + wundergroundOptions.key + '/conditions/q/'
+        + wundergroundOptions.latitude + ','
+        + wundergroundOptions.longitude + '.json', function(json) {
+            console.log(json);
+            $('#curr-outside').append('<p>Temperature: ' + json.current_observation.temp_c + '°C</p>');
+            $('#curr-outside').append('<p>Humidity: ' + json.current_observation.relative_humidity + '</p>');
+            $('#curr-outside-info').append('<a href="' + json.current_observation.forecast_url + '" target="_blank">Detailed forecast</a>');
+        });
+}
+
 $(document).ready(function() {
+    getLocation();
+    $(document).on('geolocation', function(e, position) {
+        wundergroundOptions.latitude = position.coords.latitude;
+        wundergroundOptions.longitude = position.coords.longitude;
+        loadOutsideWeather();
+    });
 
     loadChart('/api/past/24h', '#chart-24h', {
         title: {
@@ -325,6 +366,7 @@ $(document).ready(function() {
             loadCurrentData();
         }
     });
+
 
 
 });

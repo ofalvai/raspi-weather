@@ -99,7 +99,7 @@ var db = {
                         res.json(result);
                     }
                 });
-            }        
+            }
         });
     }
 }
