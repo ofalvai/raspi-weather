@@ -4,6 +4,7 @@ DHT22 sensor logger and web frontend for the Raspberry Pi.
 Based on [Adafruit's DHT22 Python library](https://github.com/adafruit/Adafruit_Python_DHT).
 
 Work In Progress, more details will come soon. Here's a screenshot in the meantime:
+
 ![Screenshot](/screenshot.png?raw=true)
 
 ##TODO
