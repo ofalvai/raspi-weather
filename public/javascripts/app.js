@@ -165,7 +165,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         });
 
         // End the plotband if it's during the night
-        var last = options.xAxis.plotbands.length - 1;
+        var last = options.xAxis.plotBands.length - 1;
         if(options.xAxis.plotBands[last].to == null) {
             options.xAxis.plotBands[last].to = Date.parse(
                 json.data[json.data.length-1].timestamp + 'Z'
