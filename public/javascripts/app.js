@@ -120,7 +120,7 @@ var globalGaugeOptions = {
 };
 
 var wundergroundOptions = {
-    key: '834f172f2fe65739',
+    key: '834f172f2fe65739', // replace with your own please
     latitude: null,
     longitude: null
 };

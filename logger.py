@@ -11,7 +11,7 @@ humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 print 'Temp: {0:0.1f} *C, Humidity: {1:0.1f}%'.format(temperature, humidity)
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
-# Cron-bol futtatva nem jo a relative path
+# Running this script by cron messes up the relative path
 
 try:
     db = sqlite3.connect(os.path.join(dir_path, 'raspi-weather.db'))
@@ -27,4 +27,3 @@ except sqlite3.Error as err:
     f.write(str(err))
     f.write('\n')
     f.close()
-
