@@ -17,6 +17,13 @@ try:
     db = sqlite3.connect(os.path.join(dir_path, 'raspi-weather.db'))
     c = db.cursor()
 
+    c.execute("""CREATE TABLE IF NOT EXISTS indoor(
+        `id`            INTEGER PRIMARY KEY AUTOINCREMENT,
+        `timestamp`     DATETIME,
+        `temperature`   NUMERIC,
+        `humidity`      NUMERIC)""")
+    db.commit()
+
     args = ['now', 'localtime', round(temperature, 1), int(humidity)]
     c.execute('INSERT INTO indoor (timestamp, temperature, humidity) VALUES (datetime(?, ?), ?, ?)', args)
     db.commit()
