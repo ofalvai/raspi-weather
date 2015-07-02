@@ -160,8 +160,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         // Ugly timezone hacking, because Date.parse() assumes UTC,
         // and the timestamp is in local timezone
         options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
-        options.series[0].pointInterval = config.measurementInterval;
-        options.series[1].pointInterval = config.measurementInterval;
+        options.series[0].pointInterval = config.measurementInterval * 1000 * 60;
+        options.series[1].pointInterval = config.measurementInterval * 1000 * 60;
 
         $(DOMtarget).highcharts(options);
         $(document).trigger('chartComplete', APICall);
@@ -256,7 +256,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             // Just a dummy date object set to the beginning of a dummy day
             // Only the hours and minutes will be displayed
             options.series[i].pointStart = Date.parse('2015.01.01 00:00Z');
-            options.series[i].pointInterval = config.measurementInterval
+            options.series[i].pointInterval = config.measurementInterval * 1000 * 60;
         }
 
         // Converting the actual last timestamp to our dummy datetime object
