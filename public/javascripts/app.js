@@ -119,8 +119,8 @@ var globalGaugeOptions = {
     }]
 };
 
-var wundergroundOptions = {
-    key: '834f172f2fe65739', // replace with your own please
+var forecastIO = {
+    key: '262d0436a1b2d47e7593f0bb41491b64', // replace with your own please
     latitude: null,
     longitude: null
 };
@@ -323,27 +323,29 @@ function getLocation() {
 }
 
 function loadOutsideWeather() {
-    if(!wundergroundOptions.key) {
-        console.log('No Wunderground API key, unable to get outside weather data.');
+    if(!forecastIO.key) {
+        console.log('No Forecast IO API key, unable to get outside weather data.');
         return;
     }
 
-    $.getJSON('http://api.wunderground.com/api/'
-        + wundergroundOptions.key + '/conditions/q/'
-        + wundergroundOptions.latitude + ','
-        + wundergroundOptions.longitude + '.json', function(json) {
-            console.log(json);
-            $('#curr-outside').append('<p>Temperature: ' + json.current_observation.temp_c + '°C</p>');
-            $('#curr-outside').append('<p>Humidity: ' + json.current_observation.relative_humidity + '</p>');
-            $('#curr-outside-info').append('<a href="' + json.current_observation.forecast_url + '" target="_blank">Detailed forecast</a>');
+    $.getJSON('https://api.forecast.io/forecast/'
+        + forecastIO.key + '/'
+        + forecastIO.latitude + ','
+        + forecastIO.longitude
+        + '/?units=si&exclude=minutely,hourly,daily,alerts,flags&callback=?', function(json) {
+            $('#curr-outside').append('<p>Temperature: ' + Math.round(json.currently.temperature*10)/10 + '°C</p>');
+            $('#curr-outside').append('<p>Humidity: ' + json.currently.humidity*100 + '%</p>');
+            $('#curr-outside-info').append('<a href="http://forecast.io/#/f/'
+                + forecastIO.latitude + ',' + forecastIO.longitude
+                + '" target="_blank">Detailed forecast</a>');
         });
 }
 
 $(document).ready(function() {
     getLocation();
     $(document).on('geolocation', function(e, position) {
-        wundergroundOptions.latitude = position.coords.latitude;
-        wundergroundOptions.longitude = position.coords.longitude;
+        forecastIO.latitude = position.coords.latitude;
+        forecastIO.longitude = position.coords.longitude;
         loadOutsideWeather();
     });
 
