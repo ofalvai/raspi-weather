@@ -1,3 +1,33 @@
+var config = {
+    /**
+     * Frequency of measurement in minutes
+     * Note: it's only needed for the graph intervals, doesn't set the logging interval.
+     * You have to edit your crontab for that.
+     */
+    measurementInterval: 30,
+
+    /**
+     * Coordinates for getting outside weather data from forecast.io
+     * By default, location is determined by HTML5 geolocation,
+     * but as a fallback it relies on manual coordinates.
+     *
+     * You can disable geolocation and provide coordinates if you want.
+     */
+    useGeoLocation: true,
+    latitude: 47.51,
+    longitude: 19.09,
+
+    /**
+     * Forecast.io API key.
+     * Please don't abuse this. Be a good guy and request your own at http://developer.forecast.io
+     */
+    APIKey: '262d0436a1b2d47e7593f0bb41491b64',
+
+    // Limits of the night plotband (the gray area on the graphs)
+    nightStart: 0,
+    nightEnd: 7
+}
+
 var globalHighchartsOptions = {
     chart: {
         type: 'spline',
@@ -79,52 +109,6 @@ var globalHighchartsOptions = {
     }
 };
 
-var globalGaugeOptions = {
-    chart: {
-        type: 'gauge'
-    },
-    title: {
-        text: ''
-    },
-    pane: {
-        startAngle: -150,
-        endAngle: 150
-    },
-    yAxis: {
-        min: -10,
-        max: 40,
-        title: {
-            text: "°C"
-        },
-        plotBands: [{
-            from: -10,
-            to: 0,
-            color: '#55BF3B' // green
-        }, {
-            from: 0,
-            to: 25,
-            color: '#DDDF0D' // yellow
-        }, {
-            from: 25,
-            to: 40,
-            color: '#DF5353' // red
-        }]
-    },
-    series: [{
-        name: 'Temperature',
-        data: [],
-        tooltip: {
-            valueSuffix: ' °C'
-        }
-    }]
-};
-
-var forecastIO = {
-    key: '262d0436a1b2d47e7593f0bb41491b64', // replace with your own please
-    latitude: null,
-    longitude: null
-};
-
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
         if(!json.success) {
@@ -151,7 +135,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
             // to get hours and minutes.
             var time = new Date(el.timestamp);
             // Night start
-            if(time.getHours() == 0 && time.getMinutes() == 0) {
+            if(time.getHours() == config.nightStart && time.getMinutes() == 0) {
                 options.xAxis.plotBands.push({
                     from: timeEpoch,
                     to: null, // will be stored later
@@ -159,12 +143,12 @@ function loadChart(APICall, DOMtarget, moreOptions) {
                 });
             }
             // Night end
-            if(time.getHours() == 7 && time.getMinutes() == 0) {
+            if(time.getHours() == config.nightEnd && time.getMinutes() == 0) {
                 options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = timeEpoch;
             }
         });
 
-        // End the plotband if it's during the night
+        // End the plotband if currently it's night
         var last = options.xAxis.plotBands.length - 1;
         if(options.xAxis.plotBands[last].to == null) {
             options.xAxis.plotBands[last].to = Date.parse(
@@ -176,8 +160,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         // Ugly timezone hacking, because Date.parse() assumes UTC,
         // and the timestamp is in local timezone
         options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
-        options.series[0].pointInterval = 1000 * 60 * 30; //30 minutes
-        options.series[1].pointInterval = 1000 * 60 * 30; //30 minutes
+        options.series[0].pointInterval = config.measurementInterval;
+        options.series[1].pointInterval = config.measurementInterval;
 
         $(DOMtarget).highcharts(options);
         $(document).trigger('chartComplete', APICall);
@@ -272,7 +256,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             // Just a dummy date object set to the beginning of a dummy day
             // Only the hours and minutes will be displayed
             options.series[i].pointStart = Date.parse('2015.01.01 00:00Z');
-            options.series[i].pointInterval = 1000 * 60 * 30; //30 minutes
+            options.series[i].pointInterval = config.measurementInterval
         }
 
         // Converting the actual last timestamp to our dummy datetime object
@@ -303,51 +287,58 @@ function loadCurrentData() {
             return;
         }
 
-        // globalGaugeOptions.series[0].data[0] = json.temperature;
-        // $('#curr-temp').highcharts(globalGaugeOptions);
         $('#curr-inside').append('<p>Temperature: ' + json.temperature + '°C</p>');
         $('#curr-inside').append('<p>Humidity: ' + json.humidity + '%</p>');
     });
 }
 
 function getLocation() {
-    if("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            $(document).trigger('geolocation', position);
-        }, function() {
-            console.log('Failed to get location');
-        });
-    } else {
-        console.log("No GeoLocation support :(");
+    if(config.useGeoLocation) {
+        if("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                config.latitude = position.coords.latitude;
+                config.longitude = position.coords.longitude;
+                $(document).trigger('geolocation');
+                return;
+            }, function() {
+                console.log('Failed to get location. Using predefined coordinates instead.');
+            });
+        } else {
+            console.log("No GeoLocation support :( Using predefined coordinates instead.");
+        }
     }
+    // If something went wrong, loadOutsideWeather() uses config.latitude and config.longitude
+    $(document).trigger('geolocation');
 }
 
 function loadOutsideWeather() {
-    if(!forecastIO.key) {
-        console.log('No Forecast IO API key, unable to get outside weather data.');
+    if(!config.APIKey) {
+        console.log('No Forecast.io API key, unable to get outside weather data.');
         return;
     }
 
     $.getJSON('https://api.forecast.io/forecast/'
-        + forecastIO.key + '/'
-        + forecastIO.latitude + ','
-        + forecastIO.longitude
-        + '/?units=si&exclude=minutely,hourly,daily,alerts,flags&callback=?', function(json) {
+        + config.APIKey + '/'
+        + config.latitude + ','
+        + config.longitude
+        + '/?units=si&exclude=minutely,hourly,daily,alerts,flags&callback=?',
+        function(json) {
+            // Empty the container, because geolocation might be allowed after getting results without it
+            $('#curr-outside').empty();
             $('#curr-outside').append('<p>Temperature: ' + Math.round(json.currently.temperature*10)/10 + '°C</p>');
             $('#curr-outside').append('<p>Humidity: ' + json.currently.humidity*100 + '%</p>');
-            $('#curr-outside-info').append('<a href="http://forecast.io/#/f/'
-                + forecastIO.latitude + ',' + forecastIO.longitude
-                + '" target="_blank">Detailed forecast</a>');
+            $('#curr-outside').append('<a href="http://forecast.io/#/f/'
+                + config.latitude + ',' + config.longitude
+                + '" target="_blank">Details on Forecast.io</a>');
         });
 }
 
 $(document).ready(function() {
-    getLocation();
-    $(document).on('geolocation', function(e, position) {
-        forecastIO.latitude = position.coords.latitude;
-        forecastIO.longitude = position.coords.longitude;
+    $(document).on('geolocation', function(e) {
         loadOutsideWeather();
     });
+
+    getLocation();
 
     loadChart('/api/past/24h', '#chart-24h', {
         title: {
