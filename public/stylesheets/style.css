@@ -14,12 +14,35 @@ a {
 
 .float-left {
     float: left;
+    margin: 0 30px;
 }
 
 .clear {
     clear: both;
 }
 
-#curr-inside {
-    margin-right: 30px;
+.temp-huge {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+#stats {
+    border-collapse: collapse;
+}
+#stats td, #stats th {
+    padding: 3px 5px;
+    min-width: 70px;
+    text-align: right;
+}
+
+.up-arrow {
+    margin-right: 4px;
+    color: #F7605C;
+    cursor: pointer;
+}
+
+.down-arrow {
+    margin-right: 4px;
+    color: #7C8FBF;
+    cursor: pointer;
 }

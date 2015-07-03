@@ -109,6 +109,26 @@ var globalHighchartsOptions = {
     }
 };
 
+var stats = {
+    today: {
+        temperature: {
+            avg: 0
+        },
+        humidity: {
+            avg: 0
+        }
+    },
+    week: {
+        temperature: {
+            avg: 0
+        },
+        humidity: {
+            avg: 0
+        }
+    },
+    logged_days: 0
+}
+
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
         if(!json.success) {
@@ -232,8 +252,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
                 valueSuffix: '%'
             },
             color: '#7C8FBF',
-            dashStyle: 'shortdash',
-            visible: false
+            dashStyle: 'shortdash'
         });
 
         $.each(json.first.data, function(index, el) {
@@ -245,7 +264,6 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             options.series[3].data.push(el.humidity);
         });
 
-        options.series[1].visible = false;
         options.series[1].dashStyle = 'solid';
         options.tooltip.xDateFormat = '%H:%M';
         options.xAxis.labels = {
@@ -287,7 +305,7 @@ function loadCurrentData() {
             return;
         }
 
-        $('#curr-inside').append('<p>Temperature: ' + json.temperature + '°C</p>');
+        $('#curr-inside').append('<div class="temp-huge">' + json.temperature + '°</div>');
         $('#curr-inside').append('<p>Humidity: ' + json.humidity + '%</p>');
     });
 }
@@ -325,7 +343,7 @@ function loadOutsideWeather() {
         function(json) {
             // Empty the container, because geolocation might be allowed after getting results without it
             $('#curr-outside').empty();
-            $('#curr-outside').append('<p>Temperature: ' + Math.round(json.currently.temperature*10)/10 + '°C</p>');
+            $('#curr-outside').append('<div class="temp-huge">' + json.currently.temperature.toFixed(1) + '°</div>');
             $('#curr-outside').append('<p>Humidity: ' + json.currently.humidity*100 + '%</p>');
             $('#curr-outside').append('<a href="http://forecast.io/#/f/'
                 + config.latitude + ',' + config.longitude
@@ -333,10 +351,56 @@ function loadOutsideWeather() {
         });
 }
 
+function computeStats() {
+    var day = $('#chart-yesterday').highcharts().series,
+        week = $('#chart-week').highcharts().series;
+    
+    // Today:
+    stats.today.temperature.min = day[0].dataMin;
+    stats.today.temperature.max = day[0].dataMax;
+    stats.today.humidity.min = day[1].dataMin;
+    stats.today.humidity.max = day[1].dataMax;
+
+    for(i = 0; i < day[0].data.length; i++) {
+        stats.today.temperature.avg += day[0].data[i].y;
+        stats.today.humidity.avg += day[1].data[i].y;
+    }
+    stats.today.temperature.avg = (stats.today.temperature.avg / day[0].data.length).toFixed(1);
+    stats.today.humidity.avg = (stats.today.humidity.avg / day[1].data.length).toFixed(1);
+
+    // Week:
+    stats.week.temperature.min = week[0].dataMin;
+    stats.week.temperature.max = week[0].dataMax;
+    stats.week.humidity.min = week[1].dataMin;
+    stats.week.humidity.max = week[1].dataMax;
+
+    for(i = 0; i < week[0].data.length; i++) {
+        stats.week.temperature.avg += week[0].data[i].y;
+        stats.week.humidity.avg += week[1].data[i].y;
+    }
+    stats.week.temperature.avg = (stats.week.temperature.avg / week[0].data.length).toFixed(1);
+    stats.week.humidity.avg = (stats.week.humidity.avg / week[1].data.length).toFixed(1);
+
+    var up = '<span class="up-arrow" title="Compared to weekly average">&#9650</span>';
+    var down = '<span class="down-arrow" title="Compared to weekly average">&#9660</span>';
+    var todayTempArrow = (stats.today.temperature.avg > stats.week.temperature.avg) ? up : down;
+    var todayHumArrow = (stats.today.humidity.avg > stats.week.humidity.avg) ? up : down;
+
+
+
+    $('#stats').append('<tr><th>Temperature</th><th>Today</th><th>Week</th></tr>');
+    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayTempArrow + stats.today.temperature.avg + '°</td><td>' + stats.week.temperature.avg + '°</td></tr>');
+    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.temperature.min + '°</td><td>' + stats.week.temperature.min + '°</td></tr>');
+    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.temperature.max + '°</td><td>' + stats.week.temperature.max + '°</td></tr>');
+    $('#stats').append('<tr><th>Humidity</th><th>Today</th><th>Week</th></tr>');
+    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.week.humidity.avg + '%</td></tr>');
+    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.week.humidity.min + '%</td></tr>');
+    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.week.humidity.max + '%</td></tr>');
+
+}
+
 $(document).ready(function() {
-    $(document).on('geolocation', function(e) {
-        loadOutsideWeather();
-    });
+    $(document).on('geolocation', loadOutsideWeather);
 
     getLocation();
 
@@ -366,6 +430,7 @@ $(document).ready(function() {
         // WARNING: magic number
         if(charts_loaded >= 3) {
             loadCurrentData();
+            computeStats();
         }
     });
 
