@@ -1,4 +1,4 @@
-body {
+/*body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
@@ -45,4 +45,8 @@ a {
     margin-right: 4px;
     color: #7C8FBF;
     cursor: pointer;
+}*/
+
+.container {
+    background: #fff;
 }
