@@ -16,7 +16,34 @@
 <body>
     <div id="wrapper">
         <div class="container">
-            <h1 class="page-header">Weather</h1>
+            <nav class="navbar navbar-default">
+              <div class="container-fluid">
+                <div class="navbar-header">
+                  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                  </button>
+                  <a class="navbar-brand" href="#">Weather Station</a>
+                </div>
+
+                <!-- Collect the nav links, forms, and other content for toggling -->
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                  <ul class="nav navbar-nav">
+                    <li>
+                        <button id="btn-reload-all" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="bottom" title="Reload all">
+                            <i class="fa fa-refresh"></i>
+                        </button>
+                        
+                    </li>
+                  </ul>
+                  <ul class="nav navbar-nav navbar-right">
+                    <li><a href="https://github.com/ofalvai/raspi-weather" target="_blank">GitHub</a></li>
+                  </ul>
+                </div>
+              </div>
+            </nav>
 
             <div id="error-container"></div>
 
@@ -104,8 +131,8 @@
                                 <ul class="dropdown-menu" role="menu">
                                     <li id="chart-interval-today-vs" class="dropdown-header">Select interval</li>
                                     <li data-selector="yesterday"><a href="#">yesterday</a></li>
-                                    <li class="divider" role="separator"></li>
-                                    <li data-selector="custom"><a href="#">custom</a></li>
+                                    <!-- <li class="divider" role="separator"></li> -->
+                                    <!-- <li data-selector="custom"><a href="#">custom</a></li> -->
                                 </ul>
                             </div>
                         </div>
@@ -128,8 +155,8 @@
                                     <li data-interval="24h"><a href="#">24h</a></li>
                                     <li data-interval="week"><a href="#">week</a></li>
                                     <li data-interval="month"><a href="#">month</a></li>
-                                    <li class="divider" role="separator"></li>
-                                    <li data-interval="custom"><a href="#">custom</a></li>
+                                    <!-- <li class="divider" role="separator"></li> -->
+                                    <!-- <li data-interval="custom"><a href="#">custom</a></li> -->
                                 </ul>
                             </div>
                         </div>

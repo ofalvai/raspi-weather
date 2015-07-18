@@ -48,7 +48,8 @@ a {
 }
 
 .container {
-    background: #fff;
+    /*background: #fff;*/
+    padding-top: 15px;
 }
 
 .btn-reload-small {
@@ -77,4 +78,10 @@ a {
 #forecast-summary {
     font-style: italic;
     font-size: 16px;
+}
+
+#btn-reload-all {
+    margin-left: 10px;
+    position: relative;
+    top: 10px;
 }

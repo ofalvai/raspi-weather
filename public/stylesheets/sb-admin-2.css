@@ -12,7 +12,7 @@ body {
     width: 100%;
 }
 
-#page-wrapper {
+/*#page-wrapper {
     padding: 0 15px;
     min-height: 568px;
     background-color: #fff;
@@ -25,9 +25,9 @@ body {
         padding: 0 30px;
         border-left: 1px solid #e7e7e7;
     }
-}
+}*/
 
-.navbar-top-links {
+/*.navbar-top-links {
     margin-right: 0;
 }
 
@@ -140,7 +140,7 @@ body {
     .navbar-top-links .dropdown-alerts {
         margin-left: auto;
     }
-}
+}*/
 
 .btn-outline {
     color: inherit;
@@ -176,7 +176,7 @@ body {
     color: #fff;
 }
 
-.chat {
+/*.chat {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -282,7 +282,7 @@ table.dataTable thead .sorting:after {
     border-radius: 35px;
     font-size: 24px;
     line-height: 1.33;
-}
+}*/
 
 .show-grid [class^=col-] {
     padding-top: 10px;

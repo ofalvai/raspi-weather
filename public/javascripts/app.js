@@ -375,23 +375,29 @@ function computeStats() {
     stats.today.temperature.max = day[0].dataMax;
     stats.today.humidity.min = day[1].dataMin;
     stats.today.humidity.max = day[1].dataMax;
+    stats.today.temperature.avg = 0;
+    stats.today.humidity.avg = 0;
 
     for(i = 0; i < day[0].data.length; i++) {
-        stats.today.temperature.avg += day[0].data[i].y;
-        stats.today.humidity.avg += day[1].data[i].y;
+        stats.today.temperature.avg += parseInt(day[0].data[i].y);
+        // console.log(stats.today.temperature.avg, day[0].data[i].y)
+        stats.today.humidity.avg += parseInt(day[1].data[i].y);
     }
     stats.today.temperature.avg = (stats.today.temperature.avg / day[0].data.length).toFixed(1);
     stats.today.humidity.avg = (stats.today.humidity.avg / day[1].data.length).toFixed(1);
+    console.log(stats.today.temperature.avg, day[0].data.length)
 
     // Week:
     stats.week.temperature.min = week[0].dataMin;
     stats.week.temperature.max = week[0].dataMax;
     stats.week.humidity.min = week[1].dataMin;
     stats.week.humidity.max = week[1].dataMax;
+    stats.week.temperature.avg = 0;
+    stats.week.humidity.avg = 0;
 
     for(i = 0; i < week[0].data.length; i++) {
-        stats.week.temperature.avg += week[0].data[i].y;
-        stats.week.humidity.avg += week[1].data[i].y;
+        stats.week.temperature.avg += parseInt(week[0].data[i].y);
+        stats.week.humidity.avg += parseInt(week[1].data[i].y);
     }
     stats.week.temperature.avg = (stats.week.temperature.avg / week[0].data.length).toFixed(1);
     stats.week.humidity.avg = (stats.week.humidity.avg / week[1].data.length).toFixed(1);
@@ -434,8 +440,13 @@ $(document).ready(function() {
         if(charts_loaded >= 2) {
             loadCurrentData();
             computeStats();
+
+            // Reshresh all button needs this thing again
+            charts_loaded = 0; 
         }
     });
+
+    $('[data-toggle="tooltip"]').tooltip();
 
 
 
@@ -452,8 +463,25 @@ $(document).ready(function() {
         $('#curr-temp-inside, #curr-hum-inside').text('-');
         loadCurrentData();
     });
+
     $('#btn-reload-outside').on('click', function() {
         $('#curr-temp-outside, #curr-hum-outside').text('-');
         loadOutsideWeather();
+    });
+
+    $('#btn-reload-all').on('click', function() {
+        $('#error-container, #stats').empty();
+        $('#curr-temp-outside, #curr-hum-outside, #curr-temp-inside, #curr-hum-inside, #forecast-summary').text('...');
+        $('#chart-today-vs, #chart-past').each(function(i, el) {
+            $(el).highcharts().destroy();
+        });
+
+        loadOutsideWeather();
+        loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
+        loadChart('/api/past/week', '#chart-past');
+
+        // There will be handled by the chartComplete event logic
+        // loadCurrentData();
+        // computeStats();
     });
 });
