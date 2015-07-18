@@ -141,12 +141,12 @@ var stats = {
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
         if(!json.success) {
-            console.log(json.error);
+            displayError(json.error, DOMtarget);
             return;
         }
 
         if(json.data.length == 0) {
-            console.log('No data.');
+            displayError('No data to display.', DOMtarget);
             return;
         }
 
@@ -200,19 +200,19 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 function loadDoubleChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
         if(!json.success) {
-            console.log(json.error);
+            displayError(json.error, DOMtarget);
             return;
         }
 
         if(json.first.data.length == 0 || json.second.data.length == 0) {
-            console.log('No data.');
+            displayError('No data to display.', DOMtarget);
             return;
         }
 
         // Make sure yesterday's data starts at 00:00
         var startTime = new Date(json.second.data[0].timestamp);
         if(startTime.getHours() !== 0) {
-            console.log('Not enough data for yesterday. A full day\'s data is required for comparison');
+            displayError('Not enough data for yesterday. A full day\'s data is required for comparison.', DOMtarget);
             $(document).trigger('chartComplete', APICall);
             return;
         }
@@ -312,13 +312,19 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
 function loadCurrentData() {
     $.getJSON('/api/current', function(json) {
         if(!json.success) {
-            console.log(json.error);
+            displayError(json.error, '#error-container');
             return;
         }
 
         $('#curr-temp-inside').text(json.temperature + '°');
         $('#curr-hum-inside').text(json.humidity + '%');
     });
+}
+
+function displayError(error, target, level) {
+    // Values: success (green), info (blue), warning (yellow), danger (red)
+    level = level || 'danger'
+    $(target).append('<div class="alert alert-' + level + '">' + error + '</div>');
 }
 
 function getLocation() {
@@ -329,11 +335,11 @@ function getLocation() {
                 config.longitude = position.coords.longitude;
                 $(document).trigger('geolocation');
             }, function() {
-                console.log('Failed to get location. Using predefined coordinates instead.');
+                displayError('Failed to get location. Using predefined coordinates instead.', '#error-container', 'warning');
                 $(document).trigger('geolocation');
             });
         } else {
-            console.log("No GeoLocation support :( Using predefined coordinates instead.");
+            displayError('No GeoLocation support :( Using predefined coordinates instead.', '#error-container', 'warning');
             $(document).trigger('geolocation');
         }
     }
@@ -341,7 +347,7 @@ function getLocation() {
 
 function loadOutsideWeather() {
     if(!config.APIKey) {
-        console.log('No Forecast.io API key, unable to get outside weather data.');
+        displayError('No Forecast.io API key, unable to get outside weather data.', '#error-container');
         return;
     }
 
