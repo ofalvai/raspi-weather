@@ -158,6 +158,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
             options.series[1].data.push(el.humidity);
 
             // Computing plot bands for the night interval(s)
+            // Firefox needs T between date and time
+            el.timestamp = el.timestamp.replace(' ', 'T');
             var timeEpoch = Date.parse(el.timestamp + 'Z');
             // The above creates a timezone-correct UNIX epoch representation
             // of the timestamp, and we need a regular datetime object
@@ -210,7 +212,9 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }
 
         // Make sure yesterday's data starts at 00:00
-        var startTime = new Date(json.second.data[0].timestamp);
+        // Firefox needs T between date and time
+        var correctedTimestamp = json.second.data[0].timestamp.replace(' ', 'T')
+        var startTime = new Date(correctedTimestamp);
         if(startTime.getHours() !== 0) {
             displayError('Not enough data for yesterday. A full day\'s data is required for comparison.', DOMtarget);
             $(document).trigger('chartComplete', APICall);
@@ -284,7 +288,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         for(var i = 0; i < options.series.length; i++) {
             // Just a dummy date object set to the beginning of a dummy day
             // Only the hours and minutes will be displayed
-            options.series[i].pointStart = Date.parse('2015.01.01 00:00Z');
+            options.series[i].pointStart = Date.parse('2015-01-01T00:00Z');
             options.series[i].pointInterval = config.measurementInterval * 1000 * 60;
         }
 
@@ -380,12 +384,10 @@ function computeStats() {
 
     for(i = 0; i < day[0].data.length; i++) {
         stats.today.temperature.avg += parseInt(day[0].data[i].y);
-        // console.log(stats.today.temperature.avg, day[0].data[i].y)
         stats.today.humidity.avg += parseInt(day[1].data[i].y);
     }
     stats.today.temperature.avg = (stats.today.temperature.avg / day[0].data.length).toFixed(1);
     stats.today.humidity.avg = (stats.today.humidity.avg / day[1].data.length).toFixed(1);
-    console.log(stats.today.temperature.avg, day[0].data.length)
 
     // Week:
     stats.week.temperature.min = week[0].dataMin;
