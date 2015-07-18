@@ -50,3 +50,23 @@ a {
 .container {
     background: #fff;
 }
+
+.btn-reload-small {
+    position: relative;
+    top: 3px;
+    cursor: pointer;
+}
+
+.highcharts-container {
+    height: 300px;
+}
+
+@media (max-width: 768px) {
+    .highcharts-container {
+        height: 250px;
+    }
+}
+
+.panel-primary > .panel-heading {
+    text-shadow: 1px 1px 1px #444;
+}

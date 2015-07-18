@@ -25,13 +25,19 @@ var config = {
 
     // Limits of the night plotband (the gray area on the graphs)
     nightStart: 0,
-    nightEnd: 7
+    nightEnd: 7,
+
+    locale: 'hu-HU'
 }
 
 var globalHighchartsOptions = {
     chart: {
         type: 'spline',
-        zoomType: 'x'
+        zoomType: 'x',
+        // spacingLeft: 5,
+        // spacingRight: 5,
+        marginLeft: 50,
+        marginRight: 50
     },
     xAxis: {
         type: 'datetime',
@@ -39,13 +45,21 @@ var globalHighchartsOptions = {
     },
     yAxis: [{
         title: {
-            text: 'Temperature (°C)'
+            text: 'Temperature (°C)',
+            margin: 5,
+            style: {
+                fontWeight: 'bold'
+            }
         },
         opposite: true
     },
     {
         title: {
-            text: 'Humidity (%)'
+            text: 'Humidity (%)',
+            margin: 5,
+            style: {
+                fontWeight: 'bold'
+            }
         },
         min: 0,
         max: 100
@@ -93,19 +107,16 @@ var globalHighchartsOptions = {
         }
     ],
     legend: {
-        align: 'right',
-        verticalAlign: 'top',
-        y: 20
+        align: 'left',
+        verticalAlign: 'bottom',
+        y: 22
     },
     tooltip: {
         shared: true,
         crosshairs: true
     },
     title: {
-        text: '',
-        style: {
-            'font-weight': 'bold'
-        }
+        text: ''
     }
 };
 
@@ -269,6 +280,8 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         options.xAxis.labels = {
             format: '{value: %H:%M}'
         };
+        options.series[1].visible = false;
+        options.series[3].visible = false;
 
         for(var i = 0; i < options.series.length; i++) {
             // Just a dummy date object set to the beginning of a dummy day
@@ -305,8 +318,8 @@ function loadCurrentData() {
             return;
         }
 
-        $('#curr-inside').append('<div class="temp-huge">' + json.temperature + '°</div>');
-        $('#curr-inside').append('<p>Humidity: ' + json.humidity + '%</p>');
+        $('#curr-temp-inside').text(json.temperature + '°');
+        $('#curr-hum-inside').text(json.humidity + '%');
     });
 }
 
@@ -317,16 +330,15 @@ function getLocation() {
                 config.latitude = position.coords.latitude;
                 config.longitude = position.coords.longitude;
                 $(document).trigger('geolocation');
-                return;
             }, function() {
                 console.log('Failed to get location. Using predefined coordinates instead.');
+                $(document).trigger('geolocation');
             });
         } else {
             console.log("No GeoLocation support :( Using predefined coordinates instead.");
+            $(document).trigger('geolocation');
         }
     }
-    // If something went wrong, loadOutsideWeather() uses config.latitude and config.longitude
-    $(document).trigger('geolocation');
 }
 
 function loadOutsideWeather() {
@@ -340,12 +352,11 @@ function loadOutsideWeather() {
         + config.latitude + ','
         + config.longitude
         + '/?units=si&exclude=minutely,hourly,daily,alerts,flags&callback=?',
-        function(json) {
-            // Empty the container, because geolocation might be allowed after getting results without it
-            $('#curr-outside').empty();
-            $('#curr-outside').append('<div class="temp-huge">' + json.currently.temperature.toFixed(1) + '°</div>');
-            $('#curr-outside').append('<p>Humidity: ' + json.currently.humidity*100 + '%</p>');
-            $('#curr-outside').append('<a href="http://forecast.io/#/f/'
+        function(json) {            
+            $('#curr-temp-outside').text(json.currently.temperature.toFixed(1) + '°');
+            $('#curr-hum-outside').text((json.currently.humidity*100).toFixed() + '%');
+
+            $('#panel-forecast-io').empty().append('<a href="http://forecast.io/#/f/'
                 + config.latitude + ',' + config.longitude
                 + '" target="_blank">Details on Forecast.io</a>');
         });
@@ -396,31 +407,30 @@ function computeStats() {
     $('#stats').append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.week.humidity.avg + '%</td></tr>');
     $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.week.humidity.min + '%</td></tr>');
     $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.week.humidity.max + '%</td></tr>');
+}
 
+function updateDateTime() {
+    var d = new Date();
+    var h = d.getHours();
+    var m = d.getMinutes();
+    h = h < 10 ? '0' + h : h;
+    m = m < 10 ? '0' + m : m;
+    $('#curr-time').text(h + ':' + m);
+    $('#curr-date').text(d.toLocaleDateString(config.locale));
 }
 
 $(document).ready(function() {
+    updateDateTime();
+
     $(document).on('geolocation', loadOutsideWeather);
 
     getLocation();
 
-    loadChart('/api/past/24h', '#chart-24h', {
-        title: {
-            text: 'Past 24 hours'
-        }
-    });
+    loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
 
-    loadChart('/api/past/week', '#chart-week', {
-        title: {
-            text: 'Past week'
-        }
-    });
+    loadChart('/api/past/week', '#chart-past');
 
-    loadDoubleChart('/api/compare/today/yesterday', '#chart-yesterday', {
-        title: {
-            text: 'Today vs. yesterday'
-        }
-    });
+
 
     // Delay the current weather request until the others have completed,
     // because it takes a long time and slows down poor little Pi :(
@@ -428,12 +438,29 @@ $(document).ready(function() {
     $(document).on('chartComplete', function(e) {
         charts_loaded++;
         // WARNING: magic number
-        if(charts_loaded >= 3) {
+        if(charts_loaded >= 2) {
             loadCurrentData();
-            computeStats();
+            // computeStats();
         }
     });
 
 
 
+    // Past chart: dropdown change interval
+    $('#chart-interval-past').on('click', function(e) {
+        e.preventDefault();
+        var interval = $(e.target).parent().attr('data-interval');
+        loadChart('/api/past/' + interval, '#chart-past');
+        $('#dropdown-label-past').text(interval);
+    });
+
+
+    $('#btn-reload-inside').on('click', function() {
+        $('#curr-temp-inside, #curr-hum-inside').text('-');
+        loadCurrentData();
+    });
+    $('#btn-reload-outside').on('click', function() {
+        $('#curr-temp-outside, #curr-hum-outside').text('-');
+        loadOutsideWeather();
+    });
 });
