@@ -25,9 +25,7 @@ var config = {
 
     // Limits of the night plotband (the gray area on the graphs)
     nightStart: 0,
-    nightEnd: 7,
-
-    locale: 'hu-HU'
+    nightEnd: 7
 }
 
 var globalHighchartsOptions = {
@@ -280,7 +278,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         options.xAxis.labels = {
             format: '{value: %H:%M}'
         };
-        options.series[1].visible = false;
+        // options.series[1].visible = false;
         options.series[3].visible = false;
 
         for(var i = 0; i < options.series.length; i++) {
@@ -351,20 +349,20 @@ function loadOutsideWeather() {
         + config.APIKey + '/'
         + config.latitude + ','
         + config.longitude
-        + '/?units=si&exclude=minutely,hourly,daily,alerts,flags&callback=?',
+        + '/?units=si&exclude=minutely,daily,alerts,flags&callback=?',
         function(json) {            
             $('#curr-temp-outside').text(json.currently.temperature.toFixed(1) + '°');
             $('#curr-hum-outside').text((json.currently.humidity*100).toFixed() + '%');
 
-            $('#panel-forecast-io').empty().append('<a href="http://forecast.io/#/f/'
-                + config.latitude + ',' + config.longitude
-                + '" target="_blank">Details on Forecast.io</a>');
+            $('#forecast-summary').text(json.hourly.summary);
+            $('#forecast-link').attr('href', 'http://forecast.io/#/f/'
+                + config.latitude + ',' + config.longitude);
         });
 }
 
 function computeStats() {
-    var day = $('#chart-yesterday').highcharts().series,
-        week = $('#chart-week').highcharts().series;
+    var day = $('#chart-today-vs').highcharts().series,
+        week = $('#chart-past').highcharts().series;
     
     // Today:
     stats.today.temperature.min = day[0].dataMin;
@@ -409,18 +407,7 @@ function computeStats() {
     $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.week.humidity.max + '%</td></tr>');
 }
 
-function updateDateTime() {
-    var d = new Date();
-    var h = d.getHours();
-    var m = d.getMinutes();
-    h = h < 10 ? '0' + h : h;
-    m = m < 10 ? '0' + m : m;
-    $('#curr-time').text(h + ':' + m);
-    $('#curr-date').text(d.toLocaleDateString(config.locale));
-}
-
 $(document).ready(function() {
-    updateDateTime();
 
     $(document).on('geolocation', loadOutsideWeather);
 
@@ -440,7 +427,7 @@ $(document).ready(function() {
         // WARNING: magic number
         if(charts_loaded >= 2) {
             loadCurrentData();
-            // computeStats();
+            computeStats();
         }
     });
 

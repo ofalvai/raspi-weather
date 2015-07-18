@@ -24,7 +24,7 @@ a {
 .temp-huge {
     font-size: 40px;
     font-weight: bold;
-}
+}*/
 
 #stats {
     border-collapse: collapse;
@@ -45,7 +45,7 @@ a {
     margin-right: 4px;
     color: #7C8FBF;
     cursor: pointer;
-}*/
+}
 
 .container {
     background: #fff;
@@ -67,6 +67,14 @@ a {
     }
 }
 
-.panel-primary > .panel-heading {
+.panel-primary > .panel-heading,
+.panel-green > .panel-heading,
+.panel-red > .panel-heading,
+.panel-yellow > .panel-heading {
     text-shadow: 1px 1px 1px #444;
+}
+
+#forecast-summary {
+    font-style: italic;
+    font-size: 16px;
 }
