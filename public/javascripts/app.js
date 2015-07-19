@@ -212,9 +212,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }
 
         // Make sure yesterday's data starts at 00:00
-        // Firefox needs T between date and time
-        var correctedTimestamp = json.second.data[0].timestamp.replace(' ', 'T')
-        var startTime = new Date(correctedTimestamp);
+        var startTime = parseDateTime(json.second.data[0].timestamp);
         if(startTime.getHours() !== 0) {
             displayError('Not enough data for yesterday. A full day\'s data is required for comparison.', DOMtarget);
             $(document).trigger('chartComplete', APICall);
@@ -293,12 +291,17 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }
 
         // Converting the actual last timestamp to our dummy datetime object
+        var lastTimestamp = parseDateTime(json.first.data[json.first.data.length-1].timestamp);
+        var h = lastTimestamp.getHours();
+        var m = lastTimestamp.getMinutes();
+        // Trailing zeros
+        h = (h < 10) ? '0' + h : h;
+        m = (m < 10) ? '0' + m : m;
 
-        var lastTimestamp = new Date(json.first.data[json.first.data.length-1].timestamp);
-        var adjustedTimestamp = new Date(
-            '2015.01.01 '
-            + lastTimestamp.getHours() + ':'
-            + lastTimestamp.getMinutes() + ':00Z'
+        var adjustedTimestamp = parseDateTime(
+            '2015-01-01 '
+            + h + ':'
+            + m + ':00Z'
         );
 
         // Adding a red vertical marker at the last measurement
@@ -323,6 +326,20 @@ function loadCurrentData() {
         $('#curr-temp-inside').text(json.temperature + '°');
         $('#curr-hum-inside').text(json.humidity + '%');
     });
+}
+
+function parseDateTime(dateTimeString) {
+    // Firefox can't parse datetime strings like YYYY-MM-DD HH:MM:SS, just YYYY-MM-DDTHH:MM:SS
+    // BUT Chrome parses the 'T-format' as UTC time (the space-format is parsed as local time), and applies timezone differences,
+    // which is the exact thing we don't need.
+    // I can't believe I have to deal with this shit. 
+    var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+    if(isFirefox) {
+        dateTimeString = dateTimeString.replace(' ', 'T');
+    }
+    console.log(dateTimeString)
+    console.log(new Date(dateTimeString))
+    return new Date(dateTimeString);
 }
 
 function displayError(error, target, level) {
@@ -462,12 +479,12 @@ $(document).ready(function() {
 
 
     $('#btn-reload-inside').on('click', function() {
-        $('#curr-temp-inside, #curr-hum-inside').text('-');
+        $('#curr-temp-inside, #curr-hum-inside').text('...');
         loadCurrentData();
     });
 
     $('#btn-reload-outside').on('click', function() {
-        $('#curr-temp-outside, #curr-hum-outside').text('-');
+        $('#curr-temp-outside, #curr-hum-outside').text('...');
         loadOutsideWeather();
     });
 
