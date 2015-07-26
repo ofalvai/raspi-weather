@@ -25,7 +25,11 @@ var config = {
 
     // Limits of the night plotband (the gray area on the graphs)
     nightStart: 0,
-    nightEnd: 7
+    nightEnd: 7,
+
+    // Used in chartComplete() to delay loading current sensor data
+    numOfCharts: 2,
+    loadedCharts: [ ]
 }
 
 var globalHighchartsOptions = {
@@ -200,8 +204,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         // Custom property to compute stats from this data set
         options.doStats = true;
 
+        config.loadedCharts.push(APICall);
         $(DOMtarget).highcharts(options);
-        $(document).trigger('chartComplete');
     });
 }
 
@@ -317,8 +321,8 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             width: 1
         }];
 
+        config.loadedCharts.push(APICall);
         $(DOMtarget).highcharts(options);
-        $(document).trigger('chartComplete', true);
     });
 }
 
@@ -348,7 +352,14 @@ function parseDateTime(dateTimeString) {
 
 function chartComplete() {
     // Fired at Highchars' load event
-    // 'this' points to Highcharts object
+    // 'this' points to the Highcharts object
+    
+    if(config.loadedCharts.length == config.numOfCharts) {
+        // Delay the current weather request until the others (charts) have completed,
+        // because it takes a long time and slows down poor little Pi :(
+        loadCurrentData();
+    }
+
     if(this.options.doStats) {
         // Ironically, at the time of the load event, the chart's data is not yet available....
         window.setTimeout(computeStats, 100);
@@ -468,22 +479,6 @@ $(document).ready(function() {
 
     loadChart('/api/past/week', '#chart-past');
 
-
-
-    // Delay the current weather request until the others have completed,
-    // because it takes a long time and slows down poor little Pi :(
-    var charts_loaded = 0;
-    $(document).on('chartComplete', function(e, refreshStats) {
-        // TODO: erre még kitalálni valamit
-        charts_loaded++;
-        // WARNING: magic number
-        if(charts_loaded >= 2) {
-            loadCurrentData();
-            // Reshresh all button needs this thing again
-            charts_loaded = 0; 
-        }
-    });
-
     $('[data-toggle="tooltip"]').tooltip();
 
     $('#dropdown-label-past').data('intervalType', 'week');
@@ -515,13 +510,10 @@ $(document).ready(function() {
         $('#chart-today-vs, #chart-past').each(function(i, el) {
             $(el).highcharts().destroy();
         });
+        config.loadedCharts = [ ];
 
         loadOutsideWeather();
         loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
         loadChart('/api/past/week', '#chart-past');
-
-        // These will be handled by the chartComplete event logic:
-        // loadCurrentData();
-        // TODO
     });
 });
