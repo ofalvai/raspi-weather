@@ -35,7 +35,10 @@ var globalHighchartsOptions = {
         // spacingLeft: 5,
         // spacingRight: 5,
         marginLeft: 50,
-        marginRight: 50
+        marginRight: 50,
+        events: {
+            load: chartComplete
+        }
     },
     xAxis: {
         type: 'datetime',
@@ -115,7 +118,7 @@ var globalHighchartsOptions = {
     },
     title: {
         text: ''
-    }
+    },
 };
 
 var stats = {
@@ -127,7 +130,7 @@ var stats = {
             avg: 0
         }
     },
-    week: {
+    interval: {
         temperature: {
             avg: 0
         },
@@ -159,8 +162,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
             // Computing plot bands for the night interval(s)
             // Firefox needs T between date and time
-            el.timestamp = el.timestamp.replace(' ', 'T');
-            var timeEpoch = Date.parse(el.timestamp + 'Z');
+            // el.timestamp = el.timestamp.replace(' ', 'T');
+            var timeEpoch = parseDateTime(el.timestamp + 'Z');
             // The above creates a timezone-correct UNIX epoch representation
             // of the timestamp, and we need a regular datetime object
             // to get hours and minutes.
@@ -194,8 +197,11 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         options.series[0].pointInterval = config.measurementInterval * 1000 * 60;
         options.series[1].pointInterval = config.measurementInterval * 1000 * 60;
 
+        // Custom property to compute stats from this data set
+        options.doStats = true;
+
         $(DOMtarget).highcharts(options);
-        $(document).trigger('chartComplete', APICall);
+        $(document).trigger('chartComplete');
     });
 }
 
@@ -215,7 +221,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         var startTime = parseDateTime(json.second.data[0].timestamp);
         if(startTime.getHours() !== 0) {
             displayError('Not enough data for yesterday. A full day\'s data is required for comparison.', DOMtarget);
-            $(document).trigger('chartComplete', APICall);
+            $(document).trigger('chartComplete');
             return;
         }
 
@@ -312,7 +318,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }];
 
         $(DOMtarget).highcharts(options);
-        $(document).trigger('chartComplete', APICall);
+        $(document).trigger('chartComplete', true);
     });
 }
 
@@ -337,14 +343,21 @@ function parseDateTime(dateTimeString) {
     if(isFirefox) {
         dateTimeString = dateTimeString.replace(' ', 'T');
     }
-    console.log(dateTimeString)
-    console.log(new Date(dateTimeString))
     return new Date(dateTimeString);
+}
+
+function chartComplete() {
+    // Fired at Highchars' load event
+    // 'this' points to Highcharts object
+    if(this.options.doStats) {
+        // Ironically, at the time of the load event, the chart's data is not yet available....
+        window.setTimeout(computeStats, 100);
+    }
 }
 
 function displayError(error, target, level) {
     // Values: success (green), info (blue), warning (yellow), danger (red)
-    level = level || 'danger'
+    level = level || 'danger';
     $(target).append('<div class="alert alert-' + level + '">' + error + '</div>');
 }
 
@@ -356,7 +369,11 @@ function getLocation() {
                 config.longitude = position.coords.longitude;
                 $(document).trigger('geolocation');
             }, function() {
-                displayError('Failed to get location. Using predefined coordinates instead.', '#error-container', 'warning');
+                if(config.useGeoLocation) {
+                    // Only display if it's configured to use geolocation,
+                    // not manual coordinates.
+                    displayError('Failed to get location. Using predefined coordinates instead.', '#error-container', 'warning');
+                }
                 $(document).trigger('geolocation');
             });
         } else {
@@ -388,8 +405,11 @@ function loadOutsideWeather() {
 }
 
 function computeStats() {
-    var day = $('#chart-today-vs').highcharts().series,
-        week = $('#chart-past').highcharts().series;
+    $('#stats').empty();
+
+    var day = $('#chart-today-vs').highcharts().series;
+    var interval = $('#chart-past').highcharts().series;
+    var intervalType = $('#dropdown-label-past').data('intervalType');
     
     // Today:
     stats.today.temperature.min = day[0].dataMin;
@@ -406,36 +426,36 @@ function computeStats() {
     stats.today.temperature.avg = (stats.today.temperature.avg / day[0].data.length).toFixed(1);
     stats.today.humidity.avg = (stats.today.humidity.avg / day[1].data.length).toFixed(1);
 
-    // Week:
-    stats.week.temperature.min = week[0].dataMin;
-    stats.week.temperature.max = week[0].dataMax;
-    stats.week.humidity.min = week[1].dataMin;
-    stats.week.humidity.max = week[1].dataMax;
-    stats.week.temperature.avg = 0;
-    stats.week.humidity.avg = 0;
+    // Last [selected] interval:
+    stats.interval.temperature.min = interval[0].dataMin;
+    stats.interval.temperature.max = interval[0].dataMax;
+    stats.interval.humidity.min = interval[1].dataMin;
+    stats.interval.humidity.max = interval[1].dataMax;
+    stats.interval.temperature.avg = 0;
+    stats.interval.humidity.avg = 0;
 
-    for(i = 0; i < week[0].data.length; i++) {
-        stats.week.temperature.avg += parseInt(week[0].data[i].y);
-        stats.week.humidity.avg += parseInt(week[1].data[i].y);
+    for(i = 0; i < interval[0].data.length; i++) {
+        stats.interval.temperature.avg += parseInt(interval[0].data[i].y);
+        stats.interval.humidity.avg += parseInt(interval[1].data[i].y);
     }
-    stats.week.temperature.avg = (stats.week.temperature.avg / week[0].data.length).toFixed(1);
-    stats.week.humidity.avg = (stats.week.humidity.avg / week[1].data.length).toFixed(1);
+    stats.interval.temperature.avg = (stats.interval.temperature.avg / interval[0].data.length).toFixed(1);
+    stats.interval.humidity.avg = (stats.interval.humidity.avg / interval[1].data.length).toFixed(1);
 
-    var up = '<span class="up-arrow" title="Compared to weekly average">&#9650</span>';
-    var down = '<span class="down-arrow" title="Compared to weekly average">&#9660</span>';
-    var todayTempArrow = (stats.today.temperature.avg > stats.week.temperature.avg) ? up : down;
-    var todayHumArrow = (stats.today.humidity.avg > stats.week.humidity.avg) ? up : down;
+    var up = '<span class="up-arrow" title="Compared to the selected interval\'s average">&#9650</span>';
+    var down = '<span class="down-arrow" title="Compared to the selected interval\'s average">&#9660</span>';
+    var todayTempArrow = (stats.today.temperature.avg > stats.interval.temperature.avg) ? up : down;
+    var todayHumArrow = (stats.today.humidity.avg > stats.interval.humidity.avg) ? up : down;
 
 
 
-    $('#stats').append('<tr><th>Temperature</th><th>Today</th><th>Week</th></tr>');
-    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayTempArrow + stats.today.temperature.avg + '°</td><td>' + stats.week.temperature.avg + '°</td></tr>');
-    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.temperature.min + '°</td><td>' + stats.week.temperature.min + '°</td></tr>');
-    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.temperature.max + '°</td><td>' + stats.week.temperature.max + '°</td></tr>');
-    $('#stats').append('<tr><th>Humidity</th><th>Today</th><th>Week</th></tr>');
-    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.week.humidity.avg + '%</td></tr>');
-    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.week.humidity.min + '%</td></tr>');
-    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.week.humidity.max + '%</td></tr>');
+    $('#stats').append('<tr><th>Temperature</th><th>today</th><th>' + intervalType + '</th></tr>');
+    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayTempArrow + stats.today.temperature.avg + '°</td><td>' + stats.interval.temperature.avg + '°</td></tr>');
+    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.temperature.min + '°</td><td>' + stats.interval.temperature.min + '°</td></tr>');
+    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.temperature.max + '°</td><td>' + stats.interval.temperature.max + '°</td></tr>');
+    $('#stats').append('<tr><th>Humidity</th><th>today</th><th>' + intervalType + '</th></tr>');
+    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.interval.humidity.avg + '%</td></tr>');
+    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.interval.humidity.min + '%</td></tr>');
+    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.interval.humidity.max + '%</td></tr>');
 }
 
 $(document).ready(function() {
@@ -453,13 +473,12 @@ $(document).ready(function() {
     // Delay the current weather request until the others have completed,
     // because it takes a long time and slows down poor little Pi :(
     var charts_loaded = 0;
-    $(document).on('chartComplete', function(e) {
+    $(document).on('chartComplete', function(e, refreshStats) {
+        // TODO: erre még kitalálni valamit
         charts_loaded++;
         // WARNING: magic number
         if(charts_loaded >= 2) {
             loadCurrentData();
-            computeStats();
-
             // Reshresh all button needs this thing again
             charts_loaded = 0; 
         }
@@ -467,14 +486,16 @@ $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
 
-
+    $('#dropdown-label-past').data('intervalType', 'week');
 
     // Past chart: dropdown change interval
     $('#chart-interval-past').on('click', function(e) {
         e.preventDefault();
+
         var interval = $(e.target).parent().attr('data-interval');
+        $('#dropdown-label-past').text(interval).data('intervalType', interval); // Data used in computeStats()
         loadChart('/api/past/' + interval, '#chart-past');
-        $('#dropdown-label-past').text(interval);
+
     });
 
 
@@ -489,7 +510,7 @@ $(document).ready(function() {
     });
 
     $('#btn-reload-all').on('click', function() {
-        $('#error-container, #stats').empty();
+        $('#error-container').empty();
         $('#curr-temp-outside, #curr-hum-outside, #curr-temp-inside, #curr-hum-inside, #forecast-summary').text('...');
         $('#chart-today-vs, #chart-past').each(function(i, el) {
             $(el).highcharts().destroy();
@@ -499,8 +520,8 @@ $(document).ready(function() {
         loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
         loadChart('/api/past/week', '#chart-past');
 
-        // There will be handled by the chartComplete event logic
+        // These will be handled by the chartComplete event logic:
         // loadCurrentData();
-        // computeStats();
+        // TODO
     });
 });
