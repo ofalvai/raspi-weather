@@ -1,34 +1,73 @@
-/*body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+body {
+    background-color: #f8f8f8;
 }
 
-a {
-  color: #00B7FF;
+#wrapper {
+    width: 100%;
 }
 
-.chart {
-    width: 800px;
-    float: left;
-}
-
-.float-left {
-    float: left;
-    margin: 0 30px;
-}
-
-.clear {
-    clear: both;
-}
-
-.temp-huge {
+.huge {
     font-size: 40px;
-    font-weight: bold;
-}*/
+}
+
+.panel-green {
+    border-color: #5cb85c;
+}
+
+.panel-green .panel-heading {
+    border-color: #5cb85c;
+    color: #fff;
+    background-color: #5cb85c;
+}
+
+.panel-green a {
+    color: #5cb85c;
+}
+
+.panel-green a:hover {
+    color: #3d8b3d;
+}
+
+.panel-red {
+    border-color: #d9534f;
+}
+
+.panel-red .panel-heading {
+    border-color: #d9534f;
+    color: #fff;
+    background-color: #d9534f;
+}
+
+.panel-red a {
+    color: #d9534f;
+}
+
+.panel-red a:hover {
+    color: #b52b27;
+}
+
+.panel-yellow {
+    border-color: #f0ad4e;
+}
+
+.panel-yellow .panel-heading {
+    border-color: #f0ad4e;
+    color: #fff;
+    background-color: #f0ad4e;
+}
+
+.panel-yellow a {
+    color: #f0ad4e;
+}
+
+.panel-yellow a:hover {
+    color: #df8a13;
+}
 
 #stats {
     border-collapse: collapse;
 }
+
 #stats td, #stats th {
     padding: 3px 5px;
     min-width: 70px;
@@ -48,7 +87,6 @@ a {
 }
 
 .container {
-    /*background: #fff;*/
     padding-top: 15px;
 }
 

@@ -5,7 +5,7 @@ Based on [Adafruit's DHT22 Python library](https://github.com/adafruit/Adafruit_
 
 Work In Progress, more details will come soon. Here's a screenshot in the meantime:
 
-![Screenshot](/screenshot.png?raw=true)
+![Screenshot](/public/images/screenshot.png?raw=true)
 
 ##TODO
 - This readme

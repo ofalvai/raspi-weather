@@ -14,7 +14,7 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 # Running this script by cron messes up the relative path
 
 try:
-    db = sqlite3.connect(os.path.join(dir_path, 'raspi-weather.db'))
+    db = sqlite3.connect(os.path.join(dir_path, '../raspi-weather.db'))
     c = db.cursor()
 
     c.execute("""CREATE TABLE IF NOT EXISTS indoor(

@@ -3,7 +3,7 @@ var path = require('path');
 
 var sensor = {
     getCurrent: function() {
-        var result = execSync('./sensor.py').toString().split('\n');
+        var result = execSync('./sensor_scripts/current.py').toString().split('\n');
         if(result[0] == "error") {
             return {
                 success: false,

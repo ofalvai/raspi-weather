@@ -1,4 +1,4 @@
 *.db
 *.log
 node_modules/
-nohup.out
+public_dist/
