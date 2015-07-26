@@ -196,7 +196,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
         options.series[0].pointStart = Date.parse(json.data[0].timestamp + 'Z');
         // Ugly timezone hacking, because Date.parse() assumes UTC,
-        // and the timestamp is in local timezone
+        // and the timestamp is in local time
         options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
         options.series[0].pointInterval = config.measurementInterval * 1000 * 60;
         options.series[1].pointInterval = config.measurementInterval * 1000 * 60;
@@ -469,8 +469,27 @@ function computeStats() {
     $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.interval.humidity.max + '%</td></tr>');
 }
 
-$(document).ready(function() {
+function autoReload() {
+    var time = new Date();
+    console.log(time);
+    var adjustedMinutes;
+    if(config.measurementInterval > 60) {
+        adjustedMinutes = config.measurementInterval % 60;
+        // I know, I know, it's not 100% correct, reloads might fire more often than needed,
+        // but I try to keep this code simple, and it's not a serious performance issue 
+    } else {
+        adjustedMinutes = config.measurementInterval;
+    }
 
+    if(time.getMinutes() % adjustedMinutes == 0) {
+        console.log('It\'s time!!!', time);
+        $('#btn-reload-all').trigger('click');
+    }
+}
+
+$(document).ready(function() {
+    // Init
+    
     $(document).on('geolocation', loadOutsideWeather);
 
     getLocation();
@@ -478,11 +497,21 @@ $(document).ready(function() {
     loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
 
     loadChart('/api/past/week', '#chart-past');
+    // loadCurrentData() is fired by chartComplete()
 
     $('[data-toggle="tooltip"]').tooltip();
 
     $('#dropdown-label-past').data('intervalType', 'week');
 
+    // The reload function is called every minute, but the function handles inside to only reload stuff when
+    // there's new data collected (see config.measurementInterval)
+    window.setInterval(autoReload, 60 * 1000);
+
+    // Init end
+    
+
+
+    // UI events
     // Past chart: dropdown change interval
     $('#chart-interval-past').on('click', function(e) {
         e.preventDefault();
@@ -515,5 +544,6 @@ $(document).ready(function() {
         loadOutsideWeather();
         loadDoubleChart('/api/compare/today/yesterday', '#chart-today-vs');
         loadChart('/api/past/week', '#chart-past');
+        // loadCurrentData() is fired by chartComplete()
     });
 });
