@@ -6,7 +6,7 @@ var gulpif = require('gulp-if');
 var lazypipe = require('lazypipe');
 var useref = require('gulp-useref');
 var uglify = require('gulp-uglify');
-var uncss = require('gulp-uncss');
+// var uncss = require('gulp-uncss');
 var minifyCSS = require('gulp-minify-css');
 
 gulp.task('default', function() {
@@ -27,13 +27,14 @@ gulp.task('clean', function(cb) {
     del(['public_dist/'], cb);
 });
 
+
 gulp.task('main', function() {
     // This is the main task, this handles the templates, and the resources linked in them (CSS and JS).
     var assets = useref.assets();
-    gulp.src('public/*.ejs')
+    gulp.src('public/*.html')
         .pipe(assets)
 
-        // .pipe(gulpif('*.js', jsTasks()))
+        .pipe(gulpif('*.js', jsTasks()))
         .pipe(gulpif('*.css', cssTasks()))
         .pipe(assets.restore())
         .pipe(useref())
@@ -49,10 +50,7 @@ var jsTasks = lazypipe()
 
 
 var cssTasks = lazypipe()
-    .pipe(uncss, {
-        html: ['public/index.ejs']
-    })
-    // .pipe(minifyCSS)
+    .pipe(minifyCSS)
 
 
 gulp.task('images', function() {
@@ -67,5 +65,15 @@ gulp.task('other', function() {
     gulp.src('public/fonts/*')
         .pipe(gulp.dest('public_dist/fonts'));
 });
+
+// UnCSS doesn't work, because of PhantomJS bugs on ARM,
+// but here is a test CSS task
+gulp.task('css', function() {
+    return gulp.src('public/stylesheets/*.css')
+        .pipe(uncss({
+            html: ['public/index.html']
+        }))
+        .pipe(gulp.dest('public_dist/stylesheets'));
+})
 
 gulp.task('build', ['clean', 'main', 'images', 'other']);
