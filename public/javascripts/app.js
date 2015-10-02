@@ -7,6 +7,12 @@ var config = {
     measurementInterval: 30,
 
     /**
+     * fahrenheit or celsius
+     * If you change this to fahrenheit, make sure you change the color zones below as well!
+     */
+    unit: 'fahrenheit',
+
+    /**
      * Coordinates for getting outside weather data from forecast.io
      * By default, location is determined by HTML5 geolocation,
      * but as a fallback it relies on manual coordinates.
@@ -72,7 +78,7 @@ var globalHighchartsOptions = {
             }
         },
         opposite: true,
-        tickInterval: 1
+        tickInterval: config.unit == "celsius" ? 1 : 10
     },
     {
         title: {
@@ -121,7 +127,6 @@ var globalHighchartsOptions = {
                 valueSuffix: '%'
             },
             color: '#869BCE',
-            // dashStyle: 'shortdot'
         }
     ],
     legend: {
@@ -174,7 +179,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
         $.each(json.data, function(index, el) {
             // Populating the series
-            options.series[0].data.push(el.temperature);
+            options.series[0].data.push(format(el.temperature));
             options.series[1].data.push(el.humidity);
 
             // Computing plot bands for the night interval(s)
@@ -288,11 +293,11 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         });
 
         $.each(json.first.data, function(index, el) {
-            options.series[0].data.push(el.temperature);
+            options.series[0].data.push(format(el.temperature));
             options.series[1].data.push(el.humidity);
         });
         $.each(json.second.data, function(index, el) {
-            options.series[2].data.push(el.temperature);
+            options.series[2].data.push(format(el.temperature));
             options.series[3].data.push(el.humidity);
         });
 
@@ -342,7 +347,7 @@ function loadCurrentData() {
             return;
         }
 
-        $('#curr-temp-inside').text(json.temperature + '°');
+        $('#curr-temp-inside').text(format(json.temperature) + '°');
         $('#curr-hum-inside').text(json.humidity + '%');
     });
 }
@@ -381,9 +386,19 @@ function displayError(error, target, level) {
     $(target).append('<div class="alert alert-' + level + '">' + error + '</div>');
 }
 
+function format(number) {
+    if(config.unit == 'fahrenheit') {
+        // Rounding to 1 decimal place at the same time
+        return Math.round((number * (9 / 5) + 32) * 10) / 10;
+    } else {
+        // Celsius is THE unit, everythings is stored in it!
+        return number;
+    }
+}
+
 function getLocation() {
     if(config.useGeoLocation) {
-        if("geolocation" in navigator) {
+        if('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 config.latitude = position.coords.latitude;
                 config.longitude = position.coords.longitude;
@@ -415,7 +430,7 @@ function loadOutsideWeather() {
         config.longitude +
         '/?units=si&exclude=minutely,daily,alerts,flags&callback=?',
         function(json) {            
-            $('#curr-temp-outside').text(json.currently.temperature.toFixed(1) + '°');
+            $('#curr-temp-outside').text(format(json.currently.temperature.toFixed(1)) + '°');
             $('#curr-hum-outside').text((json.currently.humidity*100).toFixed() + '%');
 
             $('#forecast-summary').text(json.hourly.summary);
