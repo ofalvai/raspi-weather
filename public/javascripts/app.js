@@ -17,6 +17,22 @@ var config = {
     latitude: 47.51,
     longitude: 19.09,
 
+    /*
+     * Color zones for the graph lines.
+     * Adjust to your climate and season.
+     * The number means the upper bound of the interval.
+     * 
+     * Default values and meanings:
+     * Low (yellow)......: 0-21
+     * Medium (orange)...: 21-25
+     * High (red)........: 26-99
+     */
+    zones: {
+        low: 21,
+        med: 25,
+        high: 99
+    },
+
     /**
      * Forecast.io API key.
      * Please don't abuse this. Be a good guy and request your own at http://developer.forecast.io
@@ -36,8 +52,7 @@ var globalHighchartsOptions = {
     chart: {
         type: 'spline',
         zoomType: 'x',
-        // spacingLeft: 5,
-        // spacingRight: 5,
+        alignTicks: false,
         marginLeft: 50,
         marginRight: 50,
         events: {
@@ -56,7 +71,8 @@ var globalHighchartsOptions = {
                 fontWeight: 'bold'
             }
         },
-        opposite: true
+        opposite: true,
+        tickInterval: 1
     },
     {
         title: {
@@ -82,19 +98,16 @@ var globalHighchartsOptions = {
             },
             color: '#F18324',
             zones: [{
-                // 0-22: yellow
-                value: 22,
+                value: config.zones.low,
                 color: '#F1AE24'
             },
             {
-                // 22-30: orange
-                value: 30,
+                value: config.zones.med,
                 color: '#F18324'
             },
             {
-                // 30+: red
-                value: 80,
-                color: '#F7605C'
+                value: config.zones.high,
+                color: '#F2552E'
             }]
         },
         {
@@ -107,8 +120,8 @@ var globalHighchartsOptions = {
             tooltip: {
                 valueSuffix: '%'
             },
-            color: '#7C8FBF',
-            dashStyle: 'shortdot'
+            color: '#869BCE',
+            // dashStyle: 'shortdot'
         }
     ],
     legend: {
@@ -245,27 +258,25 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             },
             color: '#F18324',
             zones: [{
-                // 0-22: yellow
-                value: 22,
+                value: config.zones.low,
                 color: '#F1AE24'
             },
             {
-                // 22-30: orange
-                value: 30,
+                value: config.zones.med,
                 color: '#F18324'
             },
             {
-                // 30+: red
-                value: 80,
-                color: '#F7605C'
+                value: config.zones.high,
+                color: '#F2552E'
             }],
-            dashStyle: 'shortdash'
+            dashStyle: 'shortdot'
         });
 
         options.series.push({
             name: 'Humidity yesterday',
             yAxis: 1,
             data: [],
+            lineWidth: 2,
             marker: {
                 enabled: false
             },
@@ -273,7 +284,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
                 valueSuffix: '%'
             },
             color: '#7C8FBF',
-            dashStyle: 'shortdash'
+            dashStyle: 'shortdot'
         });
 
         $.each(json.first.data, function(index, el) {
