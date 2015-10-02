@@ -30,7 +30,7 @@ var config = {
     // Used in chartComplete() to delay loading current sensor data
     numOfCharts: 2,
     loadedCharts: [ ]
-}
+};
 
 var globalHighchartsOptions = {
     chart: {
@@ -143,7 +143,7 @@ var stats = {
         }
     },
     logged_days: 0
-}
+};
 
 function loadChart(APICall, DOMtarget, moreOptions) {
     $.getJSON(APICall, function(json) {
@@ -152,7 +152,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
             return;
         }
 
-        if(json.data.length == 0) {
+        if(json.data.length === 0) {
             displayError('No data to display.', DOMtarget);
             return;
         }
@@ -173,7 +173,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
             // to get hours and minutes.
             var time = new Date(el.timestamp);
             // Night start
-            if(time.getHours() == config.nightStart && time.getMinutes() == 0) {
+            if(time.getHours() == config.nightStart && time.getMinutes() === 0) {
                 options.xAxis.plotBands.push({
                     from: timeEpoch,
                     to: null, // will be stored later
@@ -181,14 +181,14 @@ function loadChart(APICall, DOMtarget, moreOptions) {
                 });
             }
             // Night end
-            if(time.getHours() == config.nightEnd && time.getMinutes() == 0) {
+            if(time.getHours() == config.nightEnd && time.getMinutes() === 0) {
                 options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = timeEpoch;
             }
         });
 
         // End the plotband if currently it's night
         var last = options.xAxis.plotBands.length - 1;
-        if(options.xAxis.plotBands[last].to == null) {
+        if(options.xAxis.plotBands[last].to === null) {
             options.xAxis.plotBands[last].to = Date.parse(
                 json.data[json.data.length-1].timestamp + 'Z'
             );
@@ -216,7 +216,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             return;
         }
 
-        if(json.first.data.length == 0 || json.second.data.length == 0) {
+        if(json.first.data.length === 0 || json.second.data.length === 0) {
             displayError('No data to display.', DOMtarget);
             return;
         }
@@ -309,9 +309,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         m = (m < 10) ? '0' + m : m;
 
         var adjustedTimestamp = parseDateTime(
-            '2015-01-01 '
-            + h + ':'
-            + m + ':00Z'
+            '2015-01-01 ' + h + ':' + m + ':00Z'
         );
 
         // Adding a red vertical marker at the last measurement
@@ -400,18 +398,18 @@ function loadOutsideWeather() {
         return;
     }
 
-    $.getJSON('https://api.forecast.io/forecast/'
-        + config.APIKey + '/'
-        + config.latitude + ','
-        + config.longitude
-        + '/?units=si&exclude=minutely,daily,alerts,flags&callback=?',
+    $.getJSON('https://api.forecast.io/forecast/' +
+        config.APIKey + '/' +
+        config.latitude + ',' +
+        config.longitude +
+        '/?units=si&exclude=minutely,daily,alerts,flags&callback=?',
         function(json) {            
             $('#curr-temp-outside').text(json.currently.temperature.toFixed(1) + '°');
             $('#curr-hum-outside').text((json.currently.humidity*100).toFixed() + '%');
 
             $('#forecast-summary').text(json.hourly.summary);
-            $('#forecast-link').attr('href', 'http://forecast.io/#/f/'
-                + config.latitude + ',' + config.longitude);
+            $('#forecast-link').attr('href', 'http://forecast.io/#/f/' +
+                config.latitude + ',' + config.longitude);
         });
 }
 
@@ -481,7 +479,7 @@ function autoReload() {
         adjustedMinutes = config.measurementInterval;
     }
 
-    if(time.getMinutes() % adjustedMinutes == 0) {
+    if(time.getMinutes() % adjustedMinutes === 0) {
         console.log('It\'s time!!!', time);
         $('#btn-reload-all').trigger('click');
     }

@@ -39,18 +39,18 @@ gulp.task('main', function() {
         .pipe(assets.restore())
         .pipe(useref())
 
-        .pipe(gulp.dest('public_dist/'))
+        .pipe(gulp.dest('public_dist/'));
 });
 
 
 var jsTasks = lazypipe()
     // An alternate pipe to be executed later in the "main" task on *.js files
     // Notice the methods have not been called yet! ("uglify" instead of "uglify()")
-    .pipe(uglify)
+    .pipe(uglify);
 
 
 var cssTasks = lazypipe()
-    .pipe(minifyCSS)
+    .pipe(minifyCSS);
 
 
 gulp.task('images', function() {
@@ -74,6 +74,6 @@ gulp.task('css', function() {
             html: ['public/index.html']
         }))
         .pipe(gulp.dest('public_dist/stylesheets'));
-})
+});
 
 gulp.task('build', ['clean', 'main', 'images', 'other']);
