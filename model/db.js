@@ -23,7 +23,6 @@ var db = {
             'SELECT timestamp, temperature, humidity\
             FROM indoor WHERE timestamp >= datetime(?, ?, ?)',
             function(err) {
-                // This callback function is fired every time, even without errors
                 if(err) {
                     db.errorHandler(err, res);
                 }
@@ -106,6 +105,6 @@ var db = {
             }
         });
     }
-}
+};
 
 module.exports = db;

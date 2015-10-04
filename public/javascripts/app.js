@@ -10,7 +10,7 @@ var config = {
      * fahrenheit or celsius
      * If you change this to fahrenheit, make sure you change the color zones below as well!
      */
-    unit: 'fahrenheit',
+    unit: 'celsius',
 
     /**
      * Coordinates for getting outside weather data from forecast.io
@@ -58,7 +58,8 @@ var globalHighchartsOptions = {
     chart: {
         type: 'spline',
         zoomType: 'x',
-        alignTicks: false,
+        // To prevent the humidity axis to have ticks over 100:
+        alignTicks: false, 
         marginLeft: 50,
         marginRight: 50,
         events: {
@@ -89,7 +90,9 @@ var globalHighchartsOptions = {
             }
         },
         min: 0,
-        max: 100
+        max: 100,
+        // To prevent the humidity axis to have unrealistic ticks: only 0, 50, 100
+        tickAmount: 3
     }],
     series: [{
             name: 'Temperature',
