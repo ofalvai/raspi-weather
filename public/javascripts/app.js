@@ -532,6 +532,14 @@ $(document).ready(function() {
 
     $('#dropdown-label-past').data('intervalType', 'week');
 
+    $(document).ajaxError(function() {
+        // Display only one instance of a network error, although multiple failing AJAX calls trigger this event
+        if ($('.alert').hasClass('network') === false) {
+            // Setting a custom class
+            displayError('Network error. Check your connection and server.', '#error-container', 'danger network');
+        }
+    });
+
     // The reload function is called every minute, but the function handles inside to only reload stuff when
     // there's new data collected (see config.measurementInterval)
     window.setInterval(autoReload, 60 * 1000);
@@ -566,7 +574,10 @@ $(document).ready(function() {
         $('#error-container').empty();
         $('#curr-temp-outside, #curr-hum-outside, #curr-temp-inside, #curr-hum-inside, #forecast-summary').text('...');
         $('#chart-today-vs, #chart-past').each(function(i, el) {
-            $(el).highcharts().destroy();
+            if ($(el).highcharts()) {
+                // It might be uninitialized due to a previous error (eg. network error)
+                $(el).highcharts().destroy();
+            }
         });
         config.loadedCharts = [ ];
 
