@@ -1,6 +1,5 @@
 *.db
 *.log
 node_modules/
-public_dist/
 *.sublime-workspace
 *.sublime-project

@@ -225,6 +225,8 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         // Custom property to compute stats from this data set
         options.doStats = true;
 
+        options.series[0].lineWidth = 2;
+
         config.loadedCharts.push(APICall);
         $(DOMtarget).highcharts(options);
     });
