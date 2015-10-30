@@ -15,14 +15,13 @@ app.set('port', port);
 var server = http.createServer(app);
 server.listen(port);
 
-var publicPath = process.env.NODE_ENV == 'development' ? 'public' : 'public_dist';
-app.set('views', path.join(__dirname, publicPath));
+app.set('views', path.join(__dirname, 'public'));
 app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 
-app.use(express.static(path.join(__dirname, publicPath)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/api', APIroutes);

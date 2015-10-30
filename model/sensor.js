@@ -8,7 +8,7 @@ var sensor = {
             return {
                 success: false,
                 error: result[1]
-            }
+            };
         } else {
             return {
                 success: true,
