@@ -24,8 +24,8 @@ try:
         `humidity`      NUMERIC)""")
     db.commit()
 
-    args = ['now', 'localtime', round(temperature, 1), int(humidity)]
-    c.execute('INSERT INTO indoor (timestamp, temperature, humidity) VALUES (datetime(?, ?), ?, ?)', args)
+    args = ['now', round(temperature, 1), int(humidity)]
+    c.execute('INSERT INTO indoor (timestamp, temperature, humidity) VALUES (datetime(?), ?, ?)', args)
     db.commit()
     db.close()
 except sqlite3.Error as err:

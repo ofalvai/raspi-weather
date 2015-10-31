@@ -67,6 +67,9 @@ var globalHighchartsOptions = {
         }
     },
     xAxis: {
+        // Note: useUTC option is set to false during initialization,
+        // because Highcharts only allows that with Highcharts.setOptions(),
+        // that's why it's missing from this config object
         type: 'datetime',
         plotBands: [ ]
     },
@@ -181,46 +184,42 @@ function loadChart(APICall, DOMtarget, moreOptions) {
         var options = $.extend(true, {}, globalHighchartsOptions, moreOptions);
 
         $.each(json.data, function(index, el) {
+            var m = moment.utc(el.timestamp).local();
+
             // Populating the series
-            options.series[0].data.push(format(el.temperature));
-            options.series[1].data.push(el.humidity);
+            options.series[0].data.push([
+                m.valueOf(),
+                format(el.temperature)
+            ]);
+
+            options.series[1].data.push([
+                m.valueOf(),
+                el.humidity
+            ]);
 
             // Computing plot bands for the night interval(s)
-            // Firefox needs T between date and time
-            // el.timestamp = el.timestamp.replace(' ', 'T');
-            var timeEpoch = parseDateTime(el.timestamp + 'Z');
-            // The above creates a timezone-correct UNIX epoch representation
-            // of the timestamp, and we need a regular datetime object
-            // to get hours and minutes.
-            var time = new Date(el.timestamp);
             // Night start
-            if(time.getHours() == config.nightStart && time.getMinutes() === 0) {
+            if (m.hours() == config.nightStart && m.minutes() === 0) {
                 options.xAxis.plotBands.push({
-                    from: timeEpoch,
+                    from: m.valueOf(),
                     to: null, // will be stored later
                     color: '#f2f2f2'
                 });
             }
             // Night end
-            if(time.getHours() == config.nightEnd && time.getMinutes() === 0) {
-                options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = timeEpoch;
+            // TODO: ha kimaradás van, akkor ez nem teljesül, a moments összehasonlítás jobb lenne
+            if (m.hours() == config.nightEnd && m.minutes() === 0) {
+                options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = m.valueOf();
             }
         });
 
         // End the plotband if currently it's night
         var last = options.xAxis.plotBands.length - 1;
         if(options.xAxis.plotBands[last].to === null) {
-            options.xAxis.plotBands[last].to = Date.parse(
-                json.data[json.data.length-1].timestamp + 'Z'
-            );
+            // TODO: tesztelni!
+            var lastTimestamp = json.data[json.data.length-1].timestamp;
+            options.xAxis.plotBands[last].to = moment.utc(lastTimestamp).local().valueOf();
         }
-
-        options.series[0].pointStart = Date.parse(json.data[0].timestamp + 'Z');
-        // Ugly timezone hacking, because Date.parse() assumes UTC,
-        // and the timestamp is in local time
-        options.series[1].pointStart = Date.parse(json.data[0].timestamp + 'Z');
-        options.series[0].pointInterval = config.measurementInterval * 1000 * 60;
-        options.series[1].pointInterval = config.measurementInterval * 1000 * 60;
 
         // Custom property to compute stats from this data set
         options.doStats = true;
@@ -245,8 +244,7 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         }
 
         // Make sure yesterday's data starts at 00:00
-        var startTime = parseDateTime(json.second.data[0].timestamp);
-        if(startTime.getHours() !== 0) {
+        if(moment.utc(json.second.data[0].timestamp).hours() !== 0) {
             displayError('Not enough data for yesterday. A full day\'s data is required for comparison.', DOMtarget);
             $(document).trigger('chartComplete');
             return;
@@ -297,13 +295,40 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
             dashStyle: 'shortdot'
         });
 
+        // Today
         $.each(json.first.data, function(index, el) {
-            options.series[0].data.push(format(el.temperature));
-            options.series[1].data.push(el.humidity);
+            // We are cheating here a little to have a nice graph:
+            // 1.) Subtracting 1 day:
+            // This way the two series can overlap, and the hover bubble can compare two values at a given position.
+            // The timestamps are formatted to show only times, not dates.
+            //
+            // 2.) Rounding to minutes:
+            // because otherwise Highcharts would display a separate bubble entry
+            // for today's and yesterday's value, but (in theory) these were measured at the same time during of the day
+            // (running sensor_scripts/logger.py can be a few seconds off)
+            var m = moment.utc(el.timestamp).local().subtract(1, 'days').seconds(0);
+            options.series[0].data.push([
+                m.valueOf(),
+                format(el.temperature)
+            ]);
+            options.series[1].data.push([
+                m.valueOf(),
+                el.humidity
+            ]);
         });
+
+        // Yesterday
         $.each(json.second.data, function(index, el) {
-            options.series[2].data.push(format(el.temperature));
-            options.series[3].data.push(el.humidity);
+            // The same rounding as above with today's data
+            var m = moment.utc(el.timestamp).local().seconds(0);
+            options.series[2].data.push([
+                m.valueOf(),
+                format(el.temperature)
+            ]);
+            options.series[3].data.push([
+                m.valueOf,
+                el.humidity
+            ]);
         });
 
         options.series[1].dashStyle = 'solid';
@@ -311,31 +336,13 @@ function loadDoubleChart(APICall, DOMtarget, moreOptions) {
         options.xAxis.labels = {
             format: '{value: %H:%M}'
         };
-        // options.series[1].visible = false;
         options.series[3].visible = false;
 
-        for(var i = 0; i < options.series.length; i++) {
-            // Just a dummy date object set to the beginning of a dummy day
-            // Only the hours and minutes will be displayed
-            options.series[i].pointStart = Date.parse('2015-01-01T00:00Z');
-            options.series[i].pointInterval = config.measurementInterval * 1000 * 60;
-        }
-
-        // Converting the actual last timestamp to our dummy datetime object
-        var lastTimestamp = parseDateTime(json.first.data[json.first.data.length-1].timestamp);
-        var h = lastTimestamp.getHours();
-        var m = lastTimestamp.getMinutes();
-        // Trailing zeros
-        h = (h < 10) ? '0' + h : h;
-        m = (m < 10) ? '0' + m : m;
-
-        var adjustedTimestamp = parseDateTime(
-            '2015-01-01 ' + h + ':' + m + ':00Z'
-        );
-
         // Adding a red vertical marker at the last measurement
+        // The same subtraction as above
+        var lastTimestamp = moment.utc(json.first.data[json.first.data.length-1].timestamp).local().subtract(1, 'days');
         options.xAxis.plotLines = [{
-            value: adjustedTimestamp,
+            value: lastTimestamp.valueOf(),
             color: 'red',
             width: 1
         }];
@@ -358,15 +365,19 @@ function loadCurrentData() {
 }
 
 function parseDateTime(dateTimeString) {
+    
     // Firefox can't parse datetime strings like YYYY-MM-DD HH:MM:SS, just YYYY-MM-DDTHH:MM:SS
     // BUT Chrome parses the 'T-format' as UTC time (the space-format is parsed as local time), and applies timezone differences,
     // which is the exact thing we don't need.
     // I can't believe I have to deal with this shit. 
-    var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-    if(isFirefox) {
-        dateTimeString = dateTimeString.replace(' ', 'T');
-    }
-    return new Date(dateTimeString);
+    // var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+    // if(isFirefox) {
+    //     dateTimeString = dateTimeString.replace(' ', 'T');
+    // }
+    // return new Date(dateTimeString);
+    
+    // TODO: majd ez lesz a jó:
+    return moment.utc(dateTimeString).local().toDate();
 }
 
 function chartComplete() {
@@ -500,7 +511,6 @@ function computeStats() {
 
 function autoReload() {
     var time = new Date();
-    console.log(time);
     var adjustedMinutes;
     if(config.measurementInterval > 60) {
         adjustedMinutes = config.measurementInterval % 60;
@@ -518,6 +528,11 @@ function autoReload() {
 
 $(document).ready(function() {
     // Init
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
     
     $(document).on('geolocation', loadOutsideWeather);
 
