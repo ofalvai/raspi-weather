@@ -23,7 +23,7 @@ var config = {
     latitude: 47.51,
     longitude: 19.09,
 
-    /*
+    /**
      * Color zones for the graph lines.
      * Adjust to your climate and season.
      * The number means the upper bound of the interval.
