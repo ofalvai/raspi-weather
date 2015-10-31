@@ -1,12 +1,12 @@
 # Raspberry Pi weather station
 
-DHT22 temperature/humidity sensor logger, and browser dashboard for the Raspberry Pi. Based on [Adafruit's DHT22 Python library](https://github.com/adafruit/Adafruit_Python_DHT).
+DHT22 temperature/humidity sensor logger and browser dashboard for the Raspberry Pi. Based on [Adafruit's DHT22 Python library](https://github.com/adafruit/Adafruit_Python_DHT).
 
 ![Screenshot](/public/images/screenshot.png?raw=true)
 
 # Features
 
-- Periodically measure and store temperature and humidity (via cron and sqlite)
+- Measure and store temperature and humidity periodically (via cron and sqlite)
 - Responsive web dashboard
 - Display current temperature and humidity
 - Display logged temperature and humidity graphs
@@ -22,7 +22,6 @@ git clone git@github.com:ofalvai/raspi-weather.git
 cd raspi-weather
 npm install
 ```
-
 
 Install Adafruit's DHT22 Python library [according to their instructions](https://github.com/adafruit/Adafruit_Python_DHT#adafruit-python-dht-sensor-library).
 
@@ -56,13 +55,10 @@ sudo nohup node app.js &
 
 The server runs on port 3000, so visit for example `http://192.168.0.100:3000`
 
-# Licence
-The MIT License (MIT)
+# Future ideas
 
-Copyright (c) 2015 Olivér Falvai
+- Select custom date ranges to display on the graphs
+- Average graphs
+- Dynamic favicon (like Google Calendar)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Feel free to fork and send me pull requests :)
