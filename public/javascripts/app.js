@@ -82,7 +82,7 @@ var globalHighchartsOptions = {
             }
         },
         opposite: true,
-        tickInterval: config.unit == "celsius" ? 1 : 10
+        tickInterval: config.unit === 'celsius' ? 1 : 10
     },
     {
         title: {
@@ -132,7 +132,7 @@ var globalHighchartsOptions = {
             tooltip: {
                 valueSuffix: '%'
             },
-            color: '#869BCE',
+            color: '#869BCE'
         }
     ],
     legend: {
@@ -146,7 +146,7 @@ var globalHighchartsOptions = {
     },
     title: {
         text: ''
-    },
+    }
 };
 
 var stats = {
@@ -199,7 +199,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
 
             // Computing plot bands for the night interval(s)
             // Night start
-            if (m.hours() == config.nightStart && m.minutes() === 0) {
+            if (m.hours() === config.nightStart && m.minutes() === 0) {
                 options.xAxis.plotBands.push({
                     from: m.valueOf(),
                     to: null, // will be stored later
@@ -208,7 +208,7 @@ function loadChart(APICall, DOMtarget, moreOptions) {
             }
             // Night end
             // TODO: ha kimaradás van, akkor ez nem teljesül, a moments összehasonlítás jobb lenne
-            if (m.hours() == config.nightEnd && m.minutes() === 0) {
+            if (m.hours() === config.nightEnd && m.minutes() === 0) {
                 options.xAxis.plotBands[options.xAxis.plotBands.length-1].to = m.valueOf();
             }
         });
@@ -364,27 +364,11 @@ function loadCurrentData() {
     });
 }
 
-function parseDateTime(dateTimeString) {
-    
-    // Firefox can't parse datetime strings like YYYY-MM-DD HH:MM:SS, just YYYY-MM-DDTHH:MM:SS
-    // BUT Chrome parses the 'T-format' as UTC time (the space-format is parsed as local time), and applies timezone differences,
-    // which is the exact thing we don't need.
-    // I can't believe I have to deal with this shit. 
-    // var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
-    // if(isFirefox) {
-    //     dateTimeString = dateTimeString.replace(' ', 'T');
-    // }
-    // return new Date(dateTimeString);
-    
-    // TODO: majd ez lesz a jó:
-    return moment.utc(dateTimeString).local().toDate();
-}
-
 function chartComplete() {
     // Fired at Highchars' load event
     // 'this' points to the Highcharts object
     
-    if(config.loadedCharts.length == config.numOfCharts) {
+    if(config.loadedCharts.length === config.numOfCharts) {
         // Delay the current weather request until the others (charts) have completed,
         // because it takes a long time and slows down poor little Pi :(
         loadCurrentData();
@@ -403,7 +387,7 @@ function displayError(error, target, level) {
 }
 
 function format(number) {
-    if(config.unit == 'fahrenheit') {
+    if(config.unit === 'fahrenheit') {
         // Rounding to 1 decimal place at the same time
         return Math.round((number * (9 / 5) + 32) * 10) / 10;
     } else {
@@ -456,7 +440,8 @@ function loadOutsideWeather() {
 }
 
 function computeStats() {
-    $('#stats').empty();
+    var $stats = $('#stats');
+    $stats.empty();
 
     var day = $('#chart-today-vs').highcharts().series;
     var interval = $('#chart-past').highcharts().series;
@@ -470,7 +455,7 @@ function computeStats() {
     stats.today.temperature.avg = 0;
     stats.today.humidity.avg = 0;
 
-    for(i = 0; i < day[0].data.length; i++) {
+    for(var i = 0; i < day[0].data.length; i++) {
         stats.today.temperature.avg += parseInt(day[0].data[i].y);
         stats.today.humidity.avg += parseInt(day[1].data[i].y);
     }
@@ -485,7 +470,7 @@ function computeStats() {
     stats.interval.temperature.avg = 0;
     stats.interval.humidity.avg = 0;
 
-    for(i = 0; i < interval[0].data.length; i++) {
+    for(var i = 0; i < interval[0].data.length; i++) {
         stats.interval.temperature.avg += parseInt(interval[0].data[i].y);
         stats.interval.humidity.avg += parseInt(interval[1].data[i].y);
     }
@@ -499,14 +484,14 @@ function computeStats() {
 
 
 
-    $('#stats').append('<tr><th>Temperature</th><th>today</th><th>' + intervalType + '</th></tr>');
-    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayTempArrow + stats.today.temperature.avg + '°</td><td>' + stats.interval.temperature.avg + '°</td></tr>');
-    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.temperature.min + '°</td><td>' + stats.interval.temperature.min + '°</td></tr>');
-    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.temperature.max + '°</td><td>' + stats.interval.temperature.max + '°</td></tr>');
-    $('#stats').append('<tr><th>Humidity</th><th>today</th><th>' + intervalType + '</th></tr>');
-    $('#stats').append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.interval.humidity.avg + '%</td></tr>');
-    $('#stats').append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.interval.humidity.min + '%</td></tr>');
-    $('#stats').append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.interval.humidity.max + '%</td></tr>');
+    $stats.append('<tr><th>Temperature</th><th>today</th><th>' + intervalType + '</th></tr>');
+    $stats.append('<tr><th class="sub">avg</th><td>' + todayTempArrow + stats.today.temperature.avg + '°</td><td>' + stats.interval.temperature.avg + '°</td></tr>');
+    $stats.append('<tr><th class="sub">min</th><td>' + stats.today.temperature.min + '°</td><td>' + stats.interval.temperature.min + '°</td></tr>');
+    $stats.append('<tr><th class="sub">max</th><td>' + stats.today.temperature.max + '°</td><td>' + stats.interval.temperature.max + '°</td></tr>');
+    $stats.append('<tr><th>Humidity</th><th>today</th><th>' + intervalType + '</th></tr>');
+    $stats.append('<tr><th class="sub">avg</th><td>' + todayHumArrow + stats.today.humidity.avg + '%</td><td>' + stats.interval.humidity.avg + '%</td></tr>');
+    $stats.append('<tr><th class="sub">min</th><td>' + stats.today.humidity.min + '%</td><td>' + stats.interval.humidity.min + '%</td></tr>');
+    $stats.append('<tr><th class="sub">max</th><td>' + stats.today.humidity.max + '%</td><td>' + stats.interval.humidity.max + '%</td></tr>');
 }
 
 function autoReload() {
